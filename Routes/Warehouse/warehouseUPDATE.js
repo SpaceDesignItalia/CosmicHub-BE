@@ -9,6 +9,11 @@ const warehouseUPDATE = (db) => {
     WarehouseController.UpdateWarehouse(req, res, db);
   });
 
+  // Aggiorna un veicolo esistente
+  router.put("/UpdateVehicle", authenticateMiddleware, (req, res) => {
+    WarehouseController.UpdateVehicle(req, res, db);
+  });
+
   return router;
 };
 

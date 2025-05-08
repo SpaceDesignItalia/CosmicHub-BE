@@ -181,6 +181,31 @@ class WarehouseModel {
     });
   }
 
+  static UpdateVehicle(db, vehicleId, vehicleData) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE public."Warehouse"
+        SET name = $1, capacity = $2, license_plate = $3, last_inspection = $4
+        WHERE warehouse_id = $5
+        RETURNING *
+      `;
+      const values = [
+        vehicleData.name,
+        vehicleData.capacity,
+        vehicleData.license_plate,
+        vehicleData.last_inspection || new Date(),
+        vehicleId,
+      ];
+      db.query(query, values, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
   // Elimina un magazzino
   static DeleteWarehouse(db, warehouseId) {
     return new Promise((resolve, reject) => {
@@ -199,6 +224,22 @@ class WarehouseModel {
     });
   }
 
+  static DeleteVehicle(db, vehicleId) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        DELETE FROM public."Warehouse"
+        WHERE warehouse_id = $1
+        RETURNING *
+      `;
+      db.query(query, [vehicleId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
   // Recupera tutti i tipi di magazzino
   static GetAllWarehouseTypes(db) {
     return new Promise((resolve, reject) => {

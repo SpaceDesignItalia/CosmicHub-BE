@@ -109,6 +109,35 @@ class WarehouseController {
     }
   }
 
+  static async UpdateVehicle(req, res, db) {
+    try {
+      const vehicleId = req.query.vehicleId;
+      const vehicleData = req.body;
+
+      console.log(vehicleId);
+      console.log(vehicleData);
+
+      if (!vehicleId) {
+        return res.status(400).json({ error: "ID veicolo mancante" });
+      }
+
+      const existingVehicle = await Warehouse.GetVehicleById(db, vehicleId);
+      if (!existingVehicle) {
+        return res.status(404).json({ error: "Veicolo non trovato" });
+      }
+
+      const updatedVehicle = await Warehouse.UpdateVehicle(
+        db,
+        vehicleId,
+        vehicleData
+      );
+      res.status(200).json(updatedVehicle);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento del veicolo:", error);
+      res.status(500).json({ error: "Errore nell'aggiornamento del veicolo" });
+    }
+  }
+
   // Elimina un magazzino
   static async DeleteWarehouse(req, res, db) {
     try {
@@ -135,6 +164,20 @@ class WarehouseController {
     } catch (error) {
       console.error("Errore nell'eliminazione del magazzino:", error);
       res.status(500).json({ error: "Errore nell'eliminazione del magazzino" });
+    }
+  }
+
+  static async DeleteVehicle(req, res, db) {
+    try {
+      const vehicleId = req.query.vehicleId;
+      const deletedVehicle = await Warehouse.DeleteVehicle(db, vehicleId);
+      res.status(200).json({
+        message: "Veicolo eliminato con successo",
+        data: deletedVehicle,
+      });
+    } catch (error) {
+      console.error("Errore nell'eliminazione del veicolo:", error);
+      res.status(500).json({ error: "Errore nell'eliminazione del veicolo" });
     }
   }
 
@@ -165,7 +208,7 @@ class WarehouseController {
   // Recupera un veicolo per ID
   static async GetVehicleById(req, res, db) {
     try {
-      const vehicleId = req.query.vehicle_id;
+      const vehicleId = req.query.vehicleId;
       const vehicle = await Warehouse.GetVehicleById(db, vehicleId);
       if (!vehicle) {
         return res.status(404).json({ error: "Veicolo non trovato" });
