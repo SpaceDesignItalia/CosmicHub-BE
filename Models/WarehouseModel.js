@@ -6,6 +6,7 @@ class WarehouseModel {
         SELECT w.*, wt.name as type_name 
         FROM public."Warehouse" w
         LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
+        WHERE wt.name = 'warehouse'
       `;
       db.query(query, (error, result) => {
         if (error) {
@@ -24,7 +25,7 @@ class WarehouseModel {
         SELECT w.*, wt.name as type_name 
         FROM public."Warehouse" w
         LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.warehouse_id = $1
+        WHERE w.warehouse_id = $1 AND wt.name = 'warehouse'
       `;
       db.query(query, [warehouseId], (error, result) => {
         if (error) {
@@ -43,7 +44,7 @@ class WarehouseModel {
         SELECT w.*, wt.name as type_name 
         FROM public."Warehouse" w
         LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.company_id = $1
+        WHERE w.company_id = $1 AND wt.name = 'warehouse'
       `;
       db.query(query, [companyId], (error, result) => {
         if (error) {
