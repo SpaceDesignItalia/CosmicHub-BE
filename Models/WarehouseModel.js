@@ -60,43 +60,18 @@ class WarehouseModel {
   static CreateWarehouse(db, warehouseData) {
     return new Promise(async (resolve, reject) => {
       try {
-        // Verifico il tipo di magazzino e recupero il type_id corrispondente
-        const typeQuery = `
-          SELECT type_id FROM public."Warehouse_Type" 
-          WHERE name = $1
-        `;
-
-        // Determino il nome del tipo basato sull'input
-        const isVehicle = warehouseData.is_vehicle || false;
-        const typeName = isVehicle ? "vehicle" : "warehouse";
-
-        const typeResult = await db.query(typeQuery, [typeName]);
-
-        if (typeResult.rows.length === 0) {
-          throw new Error(
-            `Tipo di magazzino "${typeName}" non trovato nella tabella Warehouse_Type`
-          );
-        }
-
-        // Uso il type_id recuperato dalla tabella Warehouse_Type
-        const typeId = typeResult.rows[0].type_id;
-
         const query = `
           INSERT INTO public."Warehouse"
-          (name, location, company_id, created_at, created_by, capacity, type, license_plate, last_inspection_date)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          (name, location, created_at, capacity, type)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING *
         `;
         const values = [
           warehouseData.name,
           warehouseData.location,
-          warehouseData.company_id,
-          warehouseData.created_at || new Date(),
-          warehouseData.created_by,
+          new Date(),
           warehouseData.capacity,
-          typeId, // Ora usiamo il corretto type_id numerico
-          warehouseData.license_plate,
-          warehouseData.last_inspection_date,
+          2,
         ];
 
         const result = await db.query(query, values);
@@ -157,19 +132,15 @@ class WarehouseModel {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE public."Warehouse"
-        SET name = $1, location = $2, company_id = $3, capacity = $4, 
-            type = $5, license_plate = $6, last_inspection_date = $7
-        WHERE warehouse_id = $8
+        SET name = $1, location = $2,  capacity = $3
+           
+        WHERE warehouse_id = $4
         RETURNING *
       `;
       const values = [
         warehouseData.name,
         warehouseData.location,
-        warehouseData.company_id,
         warehouseData.capacity,
-        warehouseData.type,
-        warehouseData.license_plate,
-        warehouseData.last_inspection_date,
         warehouseId,
       ];
       db.query(query, values, (error, result) => {
