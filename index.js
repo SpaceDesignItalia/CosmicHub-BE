@@ -11,6 +11,7 @@ require("dotenv").config();
 // Importa le route
 const createAuthenticationRoutes = require("./Routes/Authentication/Authentication");
 const createCompanyRoutes = require("./Routes/Company/Company");
+const createEmployeeRoutes = require("./Routes/Employee/employee");
 const credentials = {
   key: fs.readFileSync("SSL/privateKey.key"),
   cert: fs.readFileSync("SSL/SpaceDesignAurora.pem"),
@@ -68,6 +69,7 @@ if (process.env.ENVIRONMENT === "development") {
 // Definisci le route principali
 app.use(PREFIX + "/Authentication", createAuthenticationRoutes(db));
 app.use(PREFIX + "/Company", createCompanyRoutes(db));
+app.use(PREFIX + "/Employee", createEmployeeRoutes(db));
 // Avvia il server HTTPS sulla porta 443
 (async () => {
   const chalk = (await import("chalk")).default;
