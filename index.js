@@ -71,6 +71,7 @@ if (process.env.ENVIRONMENT === "development") {
 app.use(PREFIX + "/Authentication", createAuthenticationRoutes(db));
 app.use(PREFIX + "/Company", createCompanyRoutes(db));
 app.use(PREFIX + "/Employee", createEmployeeRoutes(db));
+app.use(PREFIX + "/Warehouse", createWarehouseRoutes(db));
 // Avvia il server HTTPS sulla porta 443
 (async () => {
   const chalk = (await import("chalk")).default;
