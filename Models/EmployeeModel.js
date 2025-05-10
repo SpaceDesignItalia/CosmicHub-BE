@@ -4,7 +4,9 @@ const bcrypt = require("bcrypt");
 class EmployeeModel {
   static getAllEmployees(db) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM public."User"`;
+      const query = `SELECT "User"."user_id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "Role"."name" as "role" FROM public."User" 
+      INNER JOIN public."Role_User" USING (user_id)
+      INNER JOIN public."Role" USING (role_id)`;
       db.query(query, (error, result) => {
         if (error) {
           reject(error);
@@ -69,21 +71,35 @@ class EmployeeModel {
     });
   }
 
-  static updateEmployeeData(db, data) {
+  static updateEmployeeData(db, data, email) {
     return new Promise((resolve, reject) => {
       const query = `
-        UPDATE employee
-        SET name = $1, surname = $2, email = $3, phone = $4, role = $5
-        WHERE id = $6
+        UPDATE public."User"
+        SET name = $1, surname = $2, email = $3
+        WHERE email = $4
+        RETURNING user_id
       `;
       db.query(
         query,
-        [data.name, data.surname, data.email, data.phone, data.role, data.id],
+        [data.name, data.surname, data.email, email],
         (error, result) => {
           if (error) {
             reject(error);
           } else {
-            resolve(result);
+            const user_id = result.rows[0].user_id;
+            console.log(user_id);
+            const roleQuery = `
+              UPDATE public."Role_User"
+              SET role_id = $1
+              WHERE user_id = $2
+            `;
+            db.query(roleQuery, [data.role, user_id], (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            });
           }
         }
       );

@@ -32,7 +32,6 @@ class AuthenticationController {
     try {
       const LoginData = req.body.LoginData;
       let account = await Authentication.login(db, LoginData);
-
       // Imposta la durata del cookie di sessione
       req.session.cookie.maxAge = LoginData.rememberMe
         ? 30 * 24 * 60 * 60 * 1000 // 30 giorni in millisecondi

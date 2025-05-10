@@ -13,6 +13,8 @@ const createAuthenticationRoutes = require("./Routes/Authentication/Authenticati
 const createCompanyRoutes = require("./Routes/Company/Company");
 const createEmployeeRoutes = require("./Routes/Employee/employee");
 const createWarehouseRoutes = require("./Routes/Warehouse/Warehouse");
+const createRoleRoutes = require("./Routes/Role/role");
+
 const credentials = {
   key: fs.readFileSync("SSL/privateKey.key"),
   cert: fs.readFileSync("SSL/SpaceDesignAurora.pem"),
@@ -72,6 +74,8 @@ app.use(PREFIX + "/Authentication", createAuthenticationRoutes(db));
 app.use(PREFIX + "/Company", createCompanyRoutes(db));
 app.use(PREFIX + "/Employee", createEmployeeRoutes(db));
 app.use(PREFIX + "/Warehouse", createWarehouseRoutes(db));
+app.use(PREFIX + "/Role", createRoleRoutes(db));
+
 // Avvia il server HTTPS sulla porta 443
 (async () => {
   const chalk = (await import("chalk")).default;
