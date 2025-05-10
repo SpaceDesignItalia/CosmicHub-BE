@@ -50,8 +50,9 @@ class EmployeeController {
 
   static async updateEmployeeData(req, res, db) {
     try {
-      const EmployeeData = req.body.employeeData;
-      await Employee.updateEmployeeData(db, EmployeeData);
+      const UserData = req.body.userData;
+      const email = req.session.account.email;
+      await Employee.updateEmployeeData(db, UserData, email);
       res.status(200).json({
         message: "Dati dell'impiegato aggiornati con successo",
       });

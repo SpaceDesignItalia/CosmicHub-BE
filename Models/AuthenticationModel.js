@@ -25,7 +25,7 @@ class AuthenticationModel {
                 if (error) {
                   reject(error);
                 } else {
-                  resolve(true);
+                  resolve(result.rows[0]);
                 }
               }
             );
@@ -50,8 +50,18 @@ class AuthenticationModel {
               LoginData.password,
               result.rows[0].password
             );
+            let userData = result.rows[0];
             if (isPasswordValid) {
-              resolve(result.rows[0]);
+              const roleQuery = `SELECT * FROM public."Role_User" WHERE "user_id" = $1`;
+              db.query(roleQuery, [result.rows[0].user_id], (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  const role = result.rows[0].role_id;
+                  userData.role = role;
+                  resolve(userData);
+                }
+              });
             } else {
               reject(false);
             }
