@@ -37,7 +37,7 @@ class AuthenticationController {
         ? 30 * 24 * 60 * 60 * 1000 // 30 giorni in millisecondi
         : 60 * 60 * 1000; // 1 ora in millisecondi
 
-      delete account.StafferPassword; // Elimina la password dall'oggetto account prima di salvare nella sessione
+      delete account.password; // Elimina la password dall'oggetto account prima di salvare nella sessione
 
       req.session.account = account;
 

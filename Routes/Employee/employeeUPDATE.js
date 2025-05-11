@@ -12,6 +12,10 @@ const employeeUPDATE = (db) => {
     EmployeeController.updateUserPassword(req, res, db);
   });
 
+  router.put("/UpdateEmployeeVan", authenticateMiddleware, (req, res) => {
+    EmployeeController.updateEmployeeVan(req, res, db);
+  });
+
   return router;
 };
 

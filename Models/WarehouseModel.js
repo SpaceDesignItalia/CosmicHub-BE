@@ -282,6 +282,39 @@ class WarehouseModel {
       });
     });
   }
+
+  static GetEmptyVans(db, companyId) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT * FROM public."Warehouse"
+        WHERE company_id = $1 AND type <> 2 AND warehouse_id NOT IN (
+          SELECT warehouse_id FROM public."Warehouse_User"
+        )
+      `;
+      db.query(query, [companyId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows);
+        }
+      });
+    });
+  }
+
+  static GetVanByUserId(db, userId) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM public."Warehouse_User" 
+      INNER JOIN public."Warehouse" ON public."Warehouse_User".warehouse_id = public."Warehouse".warehouse_id
+      WHERE user_id = $1`;
+      db.query(query, [userId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
 }
 
 module.exports = WarehouseModel;
