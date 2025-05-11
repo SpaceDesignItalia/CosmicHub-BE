@@ -233,6 +233,30 @@ class WarehouseController {
         .json({ error: "Errore nel recupero dei veicoli dell'azienda" });
     }
   }
+
+  static async GetEmptyVans(req, res, db) {
+    try {
+      const company_id = req.session.account.company_id;
+      const emptyVans = await Warehouse.GetEmptyVans(db, company_id);
+      res.status(200).json(emptyVans);
+    } catch (error) {
+      console.error("Errore nel recupero dei veicoli vuoti:", error);
+      res.status(500).json({ error: "Errore nel recupero dei veicoli vuoti" });
+    }
+  }
+
+  static async GetVanByUserId(req, res, db) {
+    try {
+      const userId = req.query.user_id;
+      const van = await Warehouse.GetVanByUserId(db, userId);
+      res.status(200).json(van);
+    } catch (error) {
+      console.error("Errore nel recupero del veicolo dell'impiegato:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nel recupero del veicolo dell'impiegato" });
+    }
+  }
 }
 
 module.exports = WarehouseController;

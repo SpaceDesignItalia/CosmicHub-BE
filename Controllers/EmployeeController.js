@@ -105,6 +105,40 @@ class EmployeeController {
         .json({ error: "Aggiornamento della password dell'impiegato fallito" });
     }
   }
+
+  static async updateEmployeeVan(req, res, db) {
+    try {
+      const van_id = req.body.van_id;
+      const employee_id = req.body.employee_id;
+      await Employee.updateEmployeeVan(db, employee_id, van_id);
+      res.status(200).json({
+        message: "Veicolo dell'impiegato aggiornato con successo",
+      });
+    } catch (error) {
+      console.error(
+        "Errore nell'aggiornamento del veicolo dell'impiegato:",
+        error
+      );
+      res
+        .status(500)
+        .json({ error: "Aggiornamento del veicolo dell'impiegato fallito" });
+    }
+  }
+
+  static async deleteEmployeeVan(req, res, db) {
+    try {
+      const employee_id = req.query.employee_id;
+      await Employee.deleteEmployeeVan(db, employee_id);
+      res.status(200).json({
+        message: "Veicolo dell'impiegato eliminato con successo",
+      });
+    } catch (error) {
+      console.error(
+        "Errore nell'eliminazione del veicolo dell'impiegato:",
+        error
+      );
+    }
+  }
 }
 
 module.exports = EmployeeController;

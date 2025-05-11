@@ -147,6 +147,32 @@ class EmployeeModel {
       });
     });
   }
+
+  static async updateEmployeeVan(db, employeeId, vanId) {
+    return new Promise((resolve, reject) => {
+      const query = `INSERT INTO public."Warehouse_User" (warehouse_id, user_id) VALUES ($1, $2)`;
+      db.query(query, [vanId, employeeId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+
+  static async deleteEmployeeVan(db, employeeId) {
+    return new Promise((resolve, reject) => {
+      const query = `DELETE FROM public."Warehouse_User" WHERE user_id = $1`;
+      db.query(query, [employeeId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
 }
 
 module.exports = EmployeeModel;
