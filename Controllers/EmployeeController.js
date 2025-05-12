@@ -139,6 +139,21 @@ class EmployeeController {
       );
     }
   }
+
+  static async getEmplyeesWithoutVehicle(req, res, db) {
+    try {
+      const employees = await Employee.getEmplyeesWithoutVehicle(db);
+      res.status(200).json(employees);
+    } catch (error) {
+      console.error(
+        "Errore nel recupero degli impiegati senza veicolo:",
+        error
+      );
+      res
+        .status(500)
+        .json({ error: "Recupero degli impiegati senza veicolo fallito" });
+    }
+  }
 }
 
 module.exports = EmployeeController;

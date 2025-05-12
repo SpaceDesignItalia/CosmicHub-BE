@@ -17,6 +17,14 @@ const employeeGET = (db) => {
     EmployeeController.searchEmployee(req, res, db);
   });
 
+  router.get(
+    "/GetEmplyeesWithoutVehicle",
+    authenticateMiddleware,
+    (req, res) => {
+      EmployeeController.getEmplyeesWithoutVehicle(req, res, db);
+    }
+  );
+
   return router;
 };
 

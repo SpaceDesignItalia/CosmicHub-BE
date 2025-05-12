@@ -173,6 +173,19 @@ class EmployeeModel {
       });
     });
   }
+
+  static async getEmplyeesWithoutVehicle(db) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" WHERE user_id NOT IN (SELECT user_id FROM public."Warehouse_User")`;
+      db.query(query, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows);
+        }
+      });
+    });
+  }
 }
 
 module.exports = EmployeeModel;
