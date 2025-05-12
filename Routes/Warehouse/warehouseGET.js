@@ -10,6 +10,10 @@ const warehouseGET = (db) => {
     WarehouseController.GetAllWarehouses(req, res, db);
   });
 
+  router.get("/GetUserByVehicleId", authenticateMiddleware, (req, res) => {
+    WarehouseController.GetUserByVehicleId(req, res, db);
+  });
+
   // Recupera un magazzino per ID
   router.get("/GetWarehouseById", authenticateMiddleware, (req, res) => {
     WarehouseController.GetWarehouseById(req, res, db);

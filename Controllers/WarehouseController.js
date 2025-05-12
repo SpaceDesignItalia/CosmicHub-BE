@@ -13,6 +13,17 @@ class WarehouseController {
     }
   }
 
+  static async GetUserByVehicleId(req, res, db) {
+    try {
+      const vehicleId = req.query.vehicleId;
+      const user = await Warehouse.GetUserByVehicleId(db, vehicleId);
+      res.status(200).json(user);
+    } catch (error) {
+      console.error("Errore nel recupero dell'impiegato:", error);
+      res.status(500).json({ error: "Errore nel recupero dell'impiegato" });
+    }
+  }
+
   // Recupera un magazzino per ID
   static async GetWarehouseById(req, res, db) {
     try {

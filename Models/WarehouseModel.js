@@ -18,6 +18,19 @@ class WarehouseModel {
     });
   }
 
+  static GetUserByVehicleId(db, vehicleId) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM public."Warehouse_User" WHERE warehouse_id = $1`;
+      db.query(query, [vehicleId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
   // Recupera un magazzino per ID
   static GetWarehouseById(db, warehouseId) {
     return new Promise((resolve, reject) => {

@@ -19,7 +19,7 @@ class EmployeeModel {
 
   static getEmployeeById(db, employeeId) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM employee WHERE id = $1`;
+      const query = `SELECT * FROM public."User" WHERE user_id = $1`;
       db.query(query, [employeeId], (error, result) => {
         if (error) {
           reject(error);
