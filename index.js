@@ -11,10 +11,10 @@ require("dotenv").config();
 // Importa le route
 const createAuthenticationRoutes = require("./Routes/Authentication/Authentication");
 const createCompanyRoutes = require("./Routes/Company/Company");
-const createEmployeeRoutes = require("./Routes/Employee/employee");
+const createEmployeeRoutes = require("./Routes/Employee/Employee");
 const createWarehouseRoutes = require("./Routes/Warehouse/Warehouse");
-const createRoleRoutes = require("./Routes/Role/role");
-
+const createRoleRoutes = require("./Routes/Role/Role");
+const createProductRoutes = require("./Routes/Product/Product");
 const credentials = {
   key: fs.readFileSync("SSL/privateKey.key"),
   cert: fs.readFileSync("SSL/SpaceDesignAurora.pem"),
@@ -75,7 +75,7 @@ app.use(PREFIX + "/Company", createCompanyRoutes(db));
 app.use(PREFIX + "/Employee", createEmployeeRoutes(db));
 app.use(PREFIX + "/Warehouse", createWarehouseRoutes(db));
 app.use(PREFIX + "/Role", createRoleRoutes(db));
-
+app.use(PREFIX + "/Product", createProductRoutes(db));
 // Avvia il server HTTPS sulla porta 443
 (async () => {
   const chalk = (await import("chalk")).default;
