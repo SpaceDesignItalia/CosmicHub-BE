@@ -9,9 +9,9 @@ const warehouseUPDATE = (db) => {
     WarehouseController.UpdateWarehouse(req, res, db);
   });
 
-  // Aggiorna un veicolo esistente
-  router.put("/UpdateVehicle", authenticateMiddleware, (req, res) => {
-    WarehouseController.UpdateVehicle(req, res, db);
+  // Disattiva un magazzino (soft delete)
+  router.put("/DeactivateWarehouse", authenticateMiddleware, (req, res) => {
+    WarehouseController.DeactivateWarehouse(req, res, db);
   });
 
   return router;

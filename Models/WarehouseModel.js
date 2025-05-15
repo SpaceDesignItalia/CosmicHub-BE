@@ -3,10 +3,7 @@ class WarehouseModel {
   static GetAllWarehouses(db) {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE wt.name = 'warehouse'
+        SELECT * FROM public."Warehouse" 
       `;
       db.query(query, (error, result) => {
         if (error) {
@@ -18,10 +15,14 @@ class WarehouseModel {
     });
   }
 
-  static GetUserByVehicleId(db, vehicleId) {
+  // Recupera un magazzino per ID
+  static GetWarehouseById(db, warehouseId) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM public."Warehouse_User" WHERE warehouse_id = $1`;
-      db.query(query, [vehicleId], (error, result) => {
+      const query = `
+        SELECT * FROM public."Warehouse"
+        WHERE "WarehouseID" = $1
+      `;
+      db.query(query, [warehouseId], (error, result) => {
         if (error) {
           reject(error);
         } else {
@@ -31,16 +32,14 @@ class WarehouseModel {
     });
   }
 
-  // Recupera un magazzino per ID
-  static GetWarehouseById(db, warehouseId) {
+  // Recupera un magazzino per UUID
+  static GetWarehouseByUUID(db, warehouseUUID) {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.warehouse_id = $1 AND wt.name = 'warehouse'
+        SELECT * FROM public."Warehouse"
+        WHERE "WarehouseUUID" = $1 
       `;
-      db.query(query, [warehouseId], (error, result) => {
+      db.query(query, [warehouseUUID], (error, result) => {
         if (error) {
           reject(error);
         } else {
@@ -54,10 +53,8 @@ class WarehouseModel {
   static GetWarehousesByCompanyId(db, companyId) {
     return new Promise((resolve, reject) => {
       const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        LEFT JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.company_id = $1 AND wt.name = 'warehouse'
+        SELECT * FROM public."Warehouse"
+        WHERE company_id = $1
       `;
       db.query(query, [companyId], (error, result) => {
         if (error) {
@@ -75,16 +72,20 @@ class WarehouseModel {
       try {
         const query = `
           INSERT INTO public."Warehouse"
-          (name, location, created_at, capacity, type)
-          VALUES ($1, $2, $3, $4, $5)
+          ("WarehouseName", "WarehouseCode", "WarehouseCountry", "WarehouseAdress", 
+           "IsActive", "CreatedBy", "CreatedAt", "UpdatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
           RETURNING *
         `;
         const values = [
-          warehouseData.name,
-          warehouseData.location,
+          warehouseData.WarehouseName,
+          warehouseData.WarehouseCode,
+          warehouseData.WarehouseCountry,
+          warehouseData.WarehouseAdress,
+          warehouseData.IsActive !== undefined ? warehouseData.IsActive : true,
+          warehouseData.CreatedBy,
           new Date(),
-          warehouseData.capacity,
-          2,
+          new Date(),
         ];
 
         const result = await db.query(query, values);
@@ -95,66 +96,24 @@ class WarehouseModel {
     });
   }
 
-  static CreateVehicle(db, vehicleData) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Verifico il tipo di veicolo e recupero il type_id corrispondente
-        const typeQuery = `
-          SELECT type_id FROM public."Warehouse_Type"
-          WHERE name = 'vehicle'
-        `;
-
-        const typeResult = await db.query(typeQuery);
-
-        if (typeResult.rows.length === 0) {
-          throw new Error(
-            "Tipo di veicolo non trovato nella tabella Warehouse_Type"
-          );
-        }
-
-        const typeId = typeResult.rows[0].type_id;
-
-        const query = `
-          INSERT INTO public."Warehouse"
-          (name, location, company_id, created_at, created_by, capacity, type, license_plate, last_inspection)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          RETURNING *
-        `;
-        const values = [
-          vehicleData.name,
-          vehicleData.location,
-          vehicleData.company_id,
-          vehicleData.created_at || new Date(),
-          vehicleData.created_by,
-          vehicleData.capacity,
-          typeId,
-          vehicleData.license_plate,
-          vehicleData.last_inspection_date,
-        ];
-
-        const result = await db.query(query, values);
-        resolve(result.rows[0]);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  // Aggiorna un magazzino esistente
-  static UpdateWarehouse(db, warehouseId, warehouseData) {
+  // Aggiorna un magazzino esistente per ID
+  static UpdateWarehouse(db, warehouseUUID, warehouseData) {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE public."Warehouse"
-        SET name = $1, location = $2,  capacity = $3
-           
-        WHERE warehouse_id = $4
+        SET "WarehouseName" = $1, "WarehouseCode" = $2, "WarehouseCountry" = $3, 
+            "WarehouseAdress" = $4, "IsActive" = $5, "UpdatedAt" = $6
+        WHERE "WarehouseID" = $7
         RETURNING *
       `;
       const values = [
-        warehouseData.name,
-        warehouseData.location,
-        warehouseData.capacity,
-        warehouseId,
+        warehouseData.WarehouseName,
+        warehouseData.WarehouseCode,
+        warehouseData.WarehouseCountry,
+        warehouseData.WarehouseAdress,
+        warehouseData.IsActive,
+        new Date(),
+        warehouseUUID,
       ];
       db.query(query, values, (error, result) => {
         if (error) {
@@ -166,20 +125,24 @@ class WarehouseModel {
     });
   }
 
-  static UpdateVehicle(db, vehicleId, vehicleData) {
+  // Aggiorna un magazzino esistente per UUID
+  static UpdateWarehouseByUUID(db, warehouseUUID, warehouseData) {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE public."Warehouse"
-        SET name = $1, capacity = $2, license_plate = $3, last_inspection = $4
-        WHERE warehouse_id = $5
+        SET "WarehouseName" = $1, "WarehouseCode" = $2, "WarehouseCountry" = $3, 
+            "WarehouseAdress" = $4, "IsActive" = $5, "UpdatedAt" = $6
+        WHERE "WarehouseUUID" = $7
         RETURNING *
       `;
       const values = [
-        vehicleData.name,
-        vehicleData.capacity,
-        vehicleData.license_plate,
-        vehicleData.last_inspection || new Date(),
-        vehicleId,
+        warehouseData.WarehouseName,
+        warehouseData.WarehouseCode,
+        warehouseData.WarehouseCountry,
+        warehouseData.WarehouseAdress,
+        warehouseData.IsActive,
+        new Date(),
+        warehouseUUID,
       ];
       db.query(query, values, (error, result) => {
         if (error) {
@@ -191,12 +154,50 @@ class WarehouseModel {
     });
   }
 
-  // Elimina un magazzino
+  // Disattiva un magazzino (soft delete) per ID
+  static DeactivateWarehouse(db, warehouseId) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE public."Warehouse"
+        SET "IsActive" = false, "UpdatedAt" = $1
+        WHERE "WarehouseID" = $2
+        RETURNING *
+      `;
+      db.query(query, [new Date(), warehouseId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
+  // Disattiva un magazzino (soft delete) per UUID
+  static DeactivateWarehouseByUUID(db, warehouseUUID) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE public."Warehouse"
+        SET "IsActive" = false, "UpdatedAt" = $1
+        WHERE "WarehouseUUID" = $2
+        RETURNING *
+      `;
+      db.query(query, [new Date(), warehouseUUID], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
+  // Elimina definitivamente un magazzino per ID
   static DeleteWarehouse(db, warehouseId) {
     return new Promise((resolve, reject) => {
       const query = `
         DELETE FROM public."Warehouse"
-        WHERE warehouse_id = $1
+        WHERE "WarehouseID" = $1
         RETURNING *
       `;
       db.query(query, [warehouseId], (error, result) => {
@@ -209,84 +210,15 @@ class WarehouseModel {
     });
   }
 
-  static DeleteVehicle(db, vehicleId) {
+  // Elimina definitivamente un magazzino per UUID
+  static DeleteWarehouseByUUID(db, warehouseUUID) {
     return new Promise((resolve, reject) => {
       const query = `
         DELETE FROM public."Warehouse"
-        WHERE warehouse_id = $1
+        WHERE "WarehouseUUID" = $1
         RETURNING *
       `;
-      db.query(query, [vehicleId], (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.rows[0]);
-        }
-      });
-    });
-  }
-  // Recupera tutti i tipi di magazzino
-  static GetAllWarehouseTypes(db) {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM public."Warehouse_Type"`;
-      db.query(query, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.rows);
-        }
-      });
-    });
-  }
-
-  // Recupera tutti i veicoli
-  static GetAllVehicles(db) {
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE wt.name != 'warehouse'
-      `;
-      db.query(query, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.rows);
-        }
-      });
-    });
-  }
-
-  // Recupera i veicoli per ID azienda
-  static GetVehiclesByCompanyId(db, companyId) {
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.company_id = $1 AND wt.name != 'warehouse'
-      `;
-      db.query(query, [companyId], (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.rows);
-        }
-      });
-    });
-  }
-
-  // Recupera un veicolo per ID
-  static GetVehicleById(db, vehicleId) {
-    return new Promise((resolve, reject) => {
-      const query = `
-        SELECT w.*, wt.name as type_name 
-        FROM public."Warehouse" w
-        JOIN public."Warehouse_Type" wt ON w.type = wt.type_id
-        WHERE w.warehouse_id = $1 AND wt.name != 'warehouse'
-      `;
-      db.query(query, [vehicleId], (error, result) => {
+      db.query(query, [warehouseUUID], (error, result) => {
         if (error) {
           reject(error);
         } else {
@@ -296,30 +228,14 @@ class WarehouseModel {
     });
   }
 
-  static GetEmptyVans(db, companyId) {
+  // Recupera magazzini per codice
+  static GetWarehouseByCode(db, warehouseCode) {
     return new Promise((resolve, reject) => {
       const query = `
         SELECT * FROM public."Warehouse"
-        WHERE company_id = $1 AND type <> 2 AND warehouse_id NOT IN (
-          SELECT warehouse_id FROM public."Warehouse_User"
-        )
+        WHERE "WarehouseCode" = $1
       `;
-      db.query(query, [companyId], (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result.rows);
-        }
-      });
-    });
-  }
-
-  static GetVanByUserId(db, userId) {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM public."Warehouse_User" 
-      INNER JOIN public."Warehouse" ON public."Warehouse_User".warehouse_id = public."Warehouse".warehouse_id
-      WHERE user_id = $1`;
-      db.query(query, [userId], (error, result) => {
+      db.query(query, [warehouseCode], (error, result) => {
         if (error) {
           reject(error);
         } else {
