@@ -3,10 +3,14 @@
 class ProductModel {
   static async getAllCategories(db) {
     return new Promise((resolve, reject) => {
-      db.query("SELECT * FROM Category", (err, result) => {
-        if (err) reject(err);
-        resolve(result);
-      });
+      db.query(
+        `SELECT "Category_Attribute"."name", "Category_Attribute"."type", "Category"."name" AS "category_name", "Category_Attribute"."attribute_id", "Category"."category_id" FROM public."Category_Attribute"
+        RIGHT JOIN public."Category" USING(category_id)`,
+        (err, result) => {
+          if (err) reject(err);
+          resolve(result.rows);
+        }
+      );
     });
   }
 
@@ -33,6 +37,33 @@ class ProductModel {
               }
             );
           });
+        });
+      });
+    });
+  }
+
+  static async createNewCategory(db, name, attributes, company_id, created_by) {
+    console.log(name, attributes, company_id, created_by);
+    return new Promise((resolve, reject) => {
+      const categoryQuery = `INSERT INTO public."Category" (name, company_id, created_by) VALUES ($1, $2, $3) RETURNING category_id`;
+      db.query(categoryQuery, [name, company_id, created_by], (err, result) => {
+        if (err) reject(err);
+        console.log(result);
+        attributes.forEach((attribute) => {
+          const attributesQuery = `INSERT INTO public."Category_Attribute" (category_id, name, type, created_by) VALUES ($1, $2, $3, $4)`;
+          db.query(
+            attributesQuery,
+            [
+              result.rows[0].category_id,
+              attribute.name,
+              attribute.type,
+              created_by,
+            ],
+            (err, result) => {
+              if (err) reject(err);
+              resolve(result);
+            }
+          );
         });
       });
     });

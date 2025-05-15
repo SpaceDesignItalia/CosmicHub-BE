@@ -10,6 +10,10 @@ const productPOST = (db) => {
     ProductController.createNewProduct(req, res, db);
   });
 
+  router.post("/CreateNewCategory", authenticateMiddleware, (req, res) => {
+    ProductController.createNewCategory(req, res, db);
+  });
+
   return router;
 };
 
