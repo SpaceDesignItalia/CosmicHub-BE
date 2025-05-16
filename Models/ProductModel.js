@@ -4,7 +4,7 @@ class ProductModel {
   static async getAllCategories(db) {
     return new Promise((resolve, reject) => {
       db.query(
-        `SELECT "Category_Attribute"."name", "Category_Attribute"."type", "Category"."name" AS "category_name", "Category_Attribute"."attribute_id", "Category"."category_id" FROM public."Category_Attribute"
+        `SELECT "Category_Attribute"."name", "Category_Attribute"."type", "Category"."name" AS "category_name", "Category_Attribute"."attribute_id", "Category"."category_id", "Category_Attribute"."isRequired" FROM public."Category_Attribute"
         RIGHT JOIN public."Category" USING(category_id)`,
         (err, result) => {
           if (err) reject(err);
