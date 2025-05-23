@@ -50,6 +50,17 @@ class ProductController {
       res.status(500).send("Errore nella creazione della categoria");
     }
   }
+
+  static async getAllProducts(res, db) {
+    try {
+      const products = await Product.getAllProducts(db);
+      console.log(products);
+      res.status(200).json(products);
+    } catch (error) {
+      console.error("Errore nel recupero dei prodotti:", error);
+      res.status(500).send("Errore nel recupero dei prodotti");
+    }
+  }
 }
 
 module.exports = ProductController;

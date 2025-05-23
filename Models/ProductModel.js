@@ -104,6 +104,39 @@ class ProductModel {
       });
     });
   }
+
+  static async getAllProducts(db) {
+    return new Promise((resolve, reject) => {
+      db.query(`SELECT * FROM public."Product"`, async (err, result) => {
+        if (err) reject(err);
+
+        try {
+          const products = result.rows;
+
+          // Create an array of promises for fetching attributes
+          const attributePromises = products.map((product) => {
+            return new Promise((resolveAttr, rejectAttr) => {
+              const attributesQuery = `SELECT "Attribute"."name", "Attribute"."data_type", "Attribute"."value" 
+                FROM public."Attribute"
+                WHERE "Attribute"."product_id" = $1`;
+
+              db.query(attributesQuery, [product.product_id], (err, result) => {
+                if (err) rejectAttr(err);
+                product.attributes = result.rows;
+                resolveAttr();
+              });
+            });
+          });
+
+          // Wait for all attribute queries to complete
+          await Promise.all(attributePromises);
+          resolve(products);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
 }
 
 module.exports = ProductModel;

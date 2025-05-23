@@ -9,6 +9,10 @@ const productGET = (db) => {
     ProductController.getAllCategories(res, db);
   });
 
+  router.get("/GetAllProducts", authenticateMiddleware, (req, res) => {
+    ProductController.getAllProducts(res, db);
+  });
+
   return router;
 };
 
