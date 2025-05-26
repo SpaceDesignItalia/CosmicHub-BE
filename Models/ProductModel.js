@@ -137,6 +137,16 @@ class ProductModel {
       });
     });
   }
+
+  static async updateProductQuantity(db, product_id, quantity) {
+    return new Promise((resolve, reject) => {
+      const updateQuery = `UPDATE public."Product" SET stock_unit = $1 WHERE product_id = $2`;
+      db.query(updateQuery, [quantity, product_id], (err, result) => {
+        if (err) reject(err);
+        resolve(result);
+      });
+    });
+  }
 }
 
 module.exports = ProductModel;

@@ -17,7 +17,6 @@ class ProductController {
       const data = req.body;
       const company_id = req.session.account.company_id;
       const created_by = req.session.account.user_id;
-      console.log(data, company_id, created_by);
       const product = await Product.createNewProduct(
         db,
         data,
@@ -54,11 +53,31 @@ class ProductController {
   static async getAllProducts(res, db) {
     try {
       const products = await Product.getAllProducts(db);
-      console.log(products);
       res.status(200).json(products);
     } catch (error) {
       console.error("Errore nel recupero dei prodotti:", error);
       res.status(500).send("Errore nel recupero dei prodotti");
+    }
+  }
+
+  static async updateProductQuantity(req, res, db) {
+    try {
+      const product_id = req.body.product_id;
+      const quantity = req.body.stock_unit;
+      const product = await Product.updateProductQuantity(
+        db,
+        product_id,
+        quantity
+      );
+      res.status(200).json(true);
+    } catch (error) {
+      console.error(
+        "Errore nell'aggiornamento della quantità del prodotto:",
+        error
+      );
+      res
+        .status(500)
+        .send("Errore nell'aggiornamento della quantità del prodotto");
     }
   }
 }
