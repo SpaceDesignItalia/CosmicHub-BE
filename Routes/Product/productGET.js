@@ -6,11 +6,15 @@ const authenticateMiddleware = require("../../middlewares/Authentication/Authmid
 
 const productGET = (db) => {
   router.get("/GetAllCategories", authenticateMiddleware, (req, res) => {
-    ProductController.getAllCategories(res, db);
+    ProductController.getAllCategories(req, res, db);
   });
 
   router.get("/GetAllProducts", authenticateMiddleware, (req, res) => {
-    ProductController.getAllProducts(res, db);
+    ProductController.getAllProducts(req, res, db);
+  });
+
+  router.get("/GetProductsByWarehouse", authenticateMiddleware, (req, res) => {
+    ProductController.getProductsByWarehouse(req, res, db);
   });
 
   return router;

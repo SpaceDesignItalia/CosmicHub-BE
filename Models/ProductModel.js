@@ -7,7 +7,28 @@ class ProductModel {
         `SELECT "Category_Attribute"."name", "Category_Attribute"."type", "Category"."name" AS "category_name", "Category_Attribute"."attribute_id", "Category"."category_id", "Category_Attribute"."isRequired" FROM public."Category_Attribute"
         RIGHT JOIN public."Category" USING(category_id)`,
         (err, result) => {
-          if (err) reject(err);
+          if (err) {
+            console.error("Errore nella query getAllCategories:", err);
+            reject(err);
+            return;
+          }
+          resolve(result.rows);
+        }
+      );
+    });
+  }
+
+  static async getProductsByWarehouse(db, warehouse_id) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM public."Product" WHERE warehouse_id = $1`,
+        [warehouse_id],
+        (err, result) => {
+          if (err) {
+            console.error("Errore nella query getProductsByWarehouse:", err);
+            reject(err);
+            return;
+          }
           resolve(result.rows);
         }
       );
@@ -19,7 +40,19 @@ class ProductModel {
       const categoryQuery = `SELECT "Category"."category_id" FROM public."Category"
       WHERE "Category"."name" = $1 AND "Category"."company_id" = $2`;
       db.query(categoryQuery, [data.category, company_id], (err, result) => {
-        if (err) reject(err);
+        if (err) {
+          console.error("Errore nella query categoria:", err);
+          reject(err);
+          return;
+        }
+        if (!result.rows || result.rows.length === 0) {
+          reject(
+            new Error(
+              `Categoria '${data.category}' non trovata per questa azienda`
+            )
+          );
+          return;
+        }
         const productQuery = `INSERT INTO public."Product" (name, company_id, category_id, sku, description, 
         price, min_stock_treshold, barcode, qr_code, supplier_id, brand_id, weight, dimensions, location, notes, cost_price, 
         vat_rate, reorder_quantity, stock_unit, warehouse_id, created_by) 
@@ -52,9 +85,33 @@ class ProductModel {
           ],
           (err, result) => {
             console.log(err, result);
-            if (err) reject(err);
+            if (err) {
+              console.error("Errore nell'inserimento del prodotto:", err);
+              reject(err);
+              return;
+            }
+            if (!result.rows || result.rows.length === 0) {
+              reject(
+                new Error(
+                  "Errore nell'inserimento del prodotto: nessun ID restituito"
+                )
+              );
+              return;
+            }
             const product_id = result.rows[0].product_id;
+
+            // Se non ci sono attributi, risolvi immediatamente
+            if (!data.attributes || data.attributes.length === 0) {
+              resolve({
+                product_id: product_id,
+                message: "Prodotto creato con successo",
+              });
+              return;
+            }
+
             const attributesQuery = `INSERT INTO public."Attribute" (name, data_type, value, is_required, created_by, product_id) VALUES ($1, $2, $3, $4, $5, $6)`;
+            let attributesProcessed = 0;
+
             data.attributes.forEach((attribute) => {
               db.query(
                 attributesQuery,
@@ -68,7 +125,13 @@ class ProductModel {
                 ],
                 (err, result) => {
                   if (err) reject(err);
-                  resolve(result);
+                  attributesProcessed++;
+                  if (attributesProcessed === data.attributes.length) {
+                    resolve({
+                      product_id: product_id,
+                      message: "Prodotto e attributi creati con successo",
+                    });
+                  }
                 }
               );
             });
@@ -83,8 +146,31 @@ class ProductModel {
     return new Promise((resolve, reject) => {
       const categoryQuery = `INSERT INTO public."Category" (name, company_id, created_by) VALUES ($1, $2, $3) RETURNING category_id`;
       db.query(categoryQuery, [name, company_id, created_by], (err, result) => {
-        if (err) reject(err);
+        if (err) {
+          console.error("Errore nell'inserimento della categoria:", err);
+          reject(err);
+          return;
+        }
+        if (!result.rows || result.rows.length === 0) {
+          reject(
+            new Error(
+              "Errore nell'inserimento della categoria: nessun ID restituito"
+            )
+          );
+          return;
+        }
         console.log(result);
+
+        // Se non ci sono attributi, risolvi immediatamente
+        if (!attributes || attributes.length === 0) {
+          resolve({
+            category_id: result.rows[0].category_id,
+            message: "Categoria creata con successo",
+          });
+          return;
+        }
+
+        let attributesProcessed = 0;
         attributes.forEach((attribute) => {
           const attributesQuery = `INSERT INTO public."Category_Attribute" (category_id, name, type, created_by) VALUES ($1, $2, $3, $4)`;
           db.query(
@@ -97,7 +183,13 @@ class ProductModel {
             ],
             (err, result) => {
               if (err) reject(err);
-              resolve(result);
+              attributesProcessed++;
+              if (attributesProcessed === attributes.length) {
+                resolve({
+                  category_id: result.rows[0].category_id,
+                  message: "Categoria e attributi creati con successo",
+                });
+              }
             }
           );
         });
@@ -108,7 +200,11 @@ class ProductModel {
   static async getAllProducts(db) {
     return new Promise((resolve, reject) => {
       db.query(`SELECT * FROM public."Product"`, async (err, result) => {
-        if (err) reject(err);
+        if (err) {
+          console.error("Errore nella query getAllProducts:", err);
+          reject(err);
+          return;
+        }
 
         try {
           const products = result.rows;
@@ -142,7 +238,11 @@ class ProductModel {
     return new Promise((resolve, reject) => {
       const updateQuery = `UPDATE public."Product" SET stock_unit = $1 WHERE product_id = $2`;
       db.query(updateQuery, [quantity, product_id], (err, result) => {
-        if (err) reject(err);
+        if (err) {
+          console.error("Errore nell'aggiornamento della quantità:", err);
+          reject(err);
+          return;
+        }
         resolve(result);
       });
     });

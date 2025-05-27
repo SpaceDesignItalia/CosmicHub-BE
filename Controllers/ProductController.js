@@ -2,13 +2,29 @@
 const Product = require("../Models/ProductModel");
 
 class ProductController {
-  static async getAllCategories(res, db) {
+  static async getAllCategories(req, res, db) {
     try {
       const categories = await Product.getAllCategories(db);
       res.status(200).json(categories);
     } catch (error) {
       console.error("Errore nel recupero delle categorie:", error);
       res.status(500).send("Errore nel recupero delle categorie");
+    }
+  }
+
+  static async getProductsByWarehouse(req, res, db) {
+    try {
+      const warehouse_id = req.query.warehouse_id;
+
+      if (!warehouse_id) {
+        return res.status(400).json({ error: "warehouse_id è richiesto" });
+      }
+
+      const products = await Product.getProductsByWarehouse(db, warehouse_id);
+      res.status(200).json(products);
+    } catch (error) {
+      console.error("Errore nel recupero dei prodotti:", error);
+      res.status(500).send("Errore nel recupero dei prodotti");
     }
   }
 
@@ -50,7 +66,7 @@ class ProductController {
     }
   }
 
-  static async getAllProducts(res, db) {
+  static async getAllProducts(req, res, db) {
     try {
       const products = await Product.getAllProducts(db);
       res.status(200).json(products);
