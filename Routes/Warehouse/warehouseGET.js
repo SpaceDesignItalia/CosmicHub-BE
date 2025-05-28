@@ -34,6 +34,10 @@ const warehouseGET = (db) => {
     }
   );
 
+  router.get("/GetAllVehicles", authenticateMiddleware, (req, res) => {
+    WarehouseController.GetAllVehicles(req, res, db);
+  });
+
   return router;
 };
 

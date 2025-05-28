@@ -9,6 +9,10 @@ const warehouseDELETE = (db) => {
     WarehouseController.DeleteWarehouse(req, res, db);
   });
 
+  router.delete("/DeleteVehicle", authenticateMiddleware, (req, res) => {
+    WarehouseController.DeleteVehicle(req, res, db);
+  });
+
   return router;
 };
 

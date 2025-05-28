@@ -9,6 +9,10 @@ const warehousePOST = (db) => {
     WarehouseController.CreateWarehouse(req, res, db);
   });
 
+  router.post("/CreateNewVehicle", authenticateMiddleware, (req, res) => {
+    WarehouseController.CreateNewVehicle(req, res, db);
+  });
+
   return router;
 };
 
