@@ -274,16 +274,43 @@ class MovementModel {
               return;
             }
 
+            // Prima recuperiamo i dati del prodotto originale
+            const originalProductQuery = `
+              SELECT * FROM public."Product" WHERE product_id = $1
+            `;
+
+            const originalProduct = await new Promise((res, rej) => {
+              db.query(
+                originalProductQuery,
+                [data.product_id],
+                (err, result) => {
+                  if (err) {
+                    rej(err);
+                    return;
+                  }
+                  if (!result.rows || result.rows.length === 0) {
+                    rej(new Error("Prodotto originale non trovato"));
+                    return;
+                  }
+                  res(result.rows[0]);
+                }
+              );
+            });
+
             // Verifica se il prodotto esiste già nel magazzino di destinazione
             const checkProductQuery = `
               SELECT product_id, stock_unit FROM public."Product" 
-              WHERE product_id = $1 AND warehouse_id = $2
+              WHERE (name = $1 OR sku LIKE $2) AND warehouse_id = $3
             `;
 
             const existingProduct = await new Promise((res, rej) => {
               db.query(
                 checkProductQuery,
-                [data.product_id, data.to_warehouse_id],
+                [
+                  originalProduct.name,
+                  originalProduct.sku + "%",
+                  data.to_warehouse_id,
+                ],
                 (err, result) => {
                   if (err) {
                     rej(err);
@@ -303,13 +330,13 @@ class MovementModel {
               const updateQuantityQuery = `
                 UPDATE public."Product" 
                 SET stock_unit = COALESCE(stock_unit, 0) + $1
-                WHERE product_id = $2 AND warehouse_id = $3
+                WHERE product_id = $2
               `;
 
               await new Promise((res, rej) => {
                 db.query(
                   updateQuantityQuery,
-                  [data.amount, data.product_id, data.to_warehouse_id],
+                  [data.amount, existingProduct.product_id],
                   (err, result) => {
                     if (err) {
                       rej(err);
@@ -321,29 +348,6 @@ class MovementModel {
               });
             } else {
               // Il prodotto non esiste nel magazzino di destinazione - lo creiamo
-              // Prima recuperiamo i dati del prodotto originale
-              const originalProductQuery = `
-                SELECT * FROM public."Product" WHERE product_id = $1
-              `;
-
-              const originalProduct = await new Promise((res, rej) => {
-                db.query(
-                  originalProductQuery,
-                  [data.product_id],
-                  (err, result) => {
-                    if (err) {
-                      rej(err);
-                      return;
-                    }
-                    if (!result.rows || result.rows.length === 0) {
-                      rej(new Error("Prodotto originale non trovato"));
-                      return;
-                    }
-                    res(result.rows[0]);
-                  }
-                );
-              });
-
               // Creiamo il prodotto nel magazzino di destinazione
               const createProductQuery = `
                 INSERT INTO public."Product" 
