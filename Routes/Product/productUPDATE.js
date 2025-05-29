@@ -10,6 +10,10 @@ const productUPDATE = (db) => {
     ProductController.updateProductQuantity(req, res, db);
   });
 
+  router.put("/UpdateProduct/:id", authenticateMiddleware, (req, res) => {
+    ProductController.updateProduct(req, res, db);
+  });
+
   return router;
 };
 

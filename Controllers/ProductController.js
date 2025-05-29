@@ -28,6 +28,27 @@ class ProductController {
     }
   }
 
+  static async getProductById(req, res, db) {
+    try {
+      const product_id = req.params.id;
+      const company_id = req.session.account.company_id;
+
+      if (!product_id) {
+        return res.status(400).json({ error: "ID prodotto è richiesto" });
+      }
+
+      const product = await Product.getProductById(db, product_id, company_id);
+      res.status(200).json(product);
+    } catch (error) {
+      console.error("Errore nel recupero del prodotto:", error);
+      if (error.message === "Prodotto non trovato o non autorizzato") {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Errore nel recupero del prodotto" });
+      }
+    }
+  }
+
   static async createNewProduct(req, res, db) {
     try {
       const data = req.body;
@@ -76,6 +97,40 @@ class ProductController {
     }
   }
 
+  static async updateProduct(req, res, db) {
+    try {
+      const product_id = req.params.id;
+      const data = req.body;
+      const company_id = req.session.account.company_id;
+      const updated_by = req.session.account.user_id;
+
+      if (!product_id) {
+        return res.status(400).json({ error: "ID prodotto è richiesto" });
+      }
+
+      const product = await Product.updateProduct(
+        db,
+        product_id,
+        data,
+        company_id,
+        updated_by
+      );
+      res.status(200).json(product);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento del prodotto:", error);
+      if (
+        error.message ===
+        "Prodotto non trovato o non autorizzato all'aggiornamento"
+      ) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Errore nell'aggiornamento del prodotto" });
+      }
+    }
+  }
+
   static async updateProductQuantity(req, res, db) {
     try {
       const product_id = req.body.product_id;
@@ -94,6 +149,32 @@ class ProductController {
       res
         .status(500)
         .send("Errore nell'aggiornamento della quantità del prodotto");
+    }
+  }
+
+  static async deleteProduct(req, res, db) {
+    try {
+      const product_id = req.params.id;
+      const company_id = req.session.account.company_id;
+
+      if (!product_id) {
+        return res.status(400).json({ error: "ID prodotto è richiesto" });
+      }
+
+      const result = await Product.deleteProduct(db, product_id, company_id);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Errore nell'eliminazione del prodotto:", error);
+      if (
+        error.message ===
+        "Prodotto non trovato o non autorizzato all'eliminazione"
+      ) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Errore nell'eliminazione del prodotto" });
+      }
     }
   }
 }

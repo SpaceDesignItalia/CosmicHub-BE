@@ -17,6 +17,10 @@ const productGET = (db) => {
     ProductController.getProductsByWarehouse(req, res, db);
   });
 
+  router.get("/GetProductById/:id", authenticateMiddleware, (req, res) => {
+    ProductController.getProductById(req, res, db);
+  });
+
   return router;
 };
 
