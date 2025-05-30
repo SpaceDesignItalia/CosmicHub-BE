@@ -244,6 +244,52 @@ class WarehouseModel {
       });
     });
   }
+
+  static CreateNewVehicle(db, vehicleData, created_by) {
+    return new Promise((resolve, reject) => {
+      const query = `INSERT INTO public."Vehicle" (name, license_plate, capacity, type, last_inspection, assigned_user_id, 
+      location, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`;
+      db.query(
+        query,
+        [
+          vehicleData.name,
+          vehicleData.license_plate,
+          vehicleData.capacity,
+          vehicleData.type,
+          vehicleData.last_inspection,
+          vehicleData.assigned_user_id,
+          vehicleData.location,
+          created_by,
+        ],
+        (error, result) => {
+          console.log(error);
+          if (error) reject(error);
+          console.log(result);
+          resolve(result.rows[0]);
+        }
+      );
+    });
+  }
+
+  static GetAllVehicles(db) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM public."Vehicle"`;
+      db.query(query, (error, result) => {
+        if (error) reject(error);
+        resolve(result.rows);
+      });
+    });
+  }
+
+  static DeleteVehicle(db, vehicleId) {
+    return new Promise((resolve, reject) => {
+      const query = `DELETE FROM public."Vehicle" WHERE vehicle_id = $1 RETURNING *`;
+      db.query(query, [vehicleId], (error, result) => {
+        if (error) reject(error);
+        resolve(result.rows[0]);
+      });
+    });
+  }
 }
 
 module.exports = WarehouseModel;

@@ -552,6 +552,54 @@ class ProductModel {
       });
     });
   }
+
+  static async getAllProductMovements(db) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT 
+        PM.movement_id, 
+        PM.product_id, 
+        PM.from_warehouse_id,
+        W_from."WarehouseName" AS from_warehouse_name,
+        PM.from_vehicle_id,
+        V_from."name" AS from_vehicle_name,
+        V_from."license_plate" AS from_vehicle_license_plate,
+        PM.to_warehouse_id,
+        W_to."WarehouseName" AS to_warehouse_name,
+        PM.to_vehicle_id,
+        V_to."name" AS to_vehicle_name,
+        V_to."license_plate" AS to_vehicle_license_plate,
+        PM.amount, 
+        PM.movement_date, 
+        PM.from_supplier,
+        S."SupplierName",
+        PMT.movement_name, 
+        P.name AS product_name,
+        P.sku,
+        PM.created_by,
+        CONCAT(U."name", ' ',U."surname") AS user_name
+    FROM public."ProductMovement" AS PM
+    INNER JOIN public."Product_Movement_Type" AS PMT USING ("movement_type_id") 
+    INNER JOIN public."Product" AS P USING ("product_id")
+    LEFT JOIN public."Warehouse" AS W_from ON W_from."WarehouseID" = PM.from_warehouse_id
+    LEFT JOIN public."Warehouse" AS W_to ON W_to."WarehouseID" = PM.to_warehouse_id
+    LEFT JOIN public."Vehicle" AS V_from ON V_from."vehicle_id" = PM.from_vehicle_id
+    LEFT JOIN public."Vehicle" AS V_to ON V_to."vehicle_id" = PM.to_vehicle_id
+    LEFT JOIN public."Supplier" AS S ON S."SupplierId" = PM.from_supplier
+    INNER JOIN public."User" AS U ON U."user_id" = PM.created_by
+    ORDER BY PM.movement_id ASC;
+
+      `;
+
+      db.query(query, [], (err, result) => {
+        if (err) {
+          console.error("Errore nella query getAllProductMovements:", err);
+          reject(err);
+          return;
+        }
+        resolve(result.rows);
+      });
+    });
+  }
 }
 
 module.exports = ProductModel;

@@ -152,6 +152,21 @@ class ProductController {
     }
   }
 
+  static async getAllProductMovements(req, res, db) {
+    try {
+      const movements = await Product.getAllProductMovements(db);
+
+      if (movements.length === 0) {
+        return res.status(404).json({ error: "Nessun movimento trovato" });
+      }
+
+      res.status(200).json(movements);
+    } catch (error) {
+      console.error("Errore nel recupero dei movimenti del prodotto:", error);
+      res.status(500).send("Errore nel recupero dei movimenti del prodotto");
+    }
+  }
+
   static async deleteProduct(req, res, db) {
     try {
       const product_id = req.params.id;

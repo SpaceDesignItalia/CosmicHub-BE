@@ -194,6 +194,43 @@ class WarehouseController {
       res.status(500).json({ error: "Errore nell'eliminazione del magazzino" });
     }
   }
+
+  static async CreateNewVehicle(req, res, db) {
+    try {
+      const vehicleData = req.body;
+      const created_by = req.session.account.user_id;
+      const newVehicle = await Warehouse.CreateNewVehicle(
+        db,
+        vehicleData,
+        created_by
+      );
+      res.status(200).json(newVehicle);
+    } catch (error) {
+      console.error("Errore nella creazione del veicolo:", error);
+      res.status(500).json({ error: "Errore nella creazione del veicolo" });
+    }
+  }
+
+  static async GetAllVehicles(req, res, db) {
+    try {
+      const vehicles = await Warehouse.GetAllVehicles(db);
+      res.status(200).json(vehicles);
+    } catch (error) {
+      console.error("Errore nel recupero dei veicoli:", error);
+      res.status(500).json({ error: "Errore nel recupero dei veicoli" });
+    }
+  }
+
+  static async DeleteVehicle(req, res, db) {
+    try {
+      const vehicleId = req.query.vehicle_id;
+      const deletedVehicle = await Warehouse.DeleteVehicle(db, vehicleId);
+      res.status(200).json(deletedVehicle);
+    } catch (error) {
+      console.error("Errore nell'eliminazione del veicolo:", error);
+      res.status(500).json({ error: "Errore nell'eliminazione del veicolo" });
+    }
+  }
 }
 
 module.exports = WarehouseController;
