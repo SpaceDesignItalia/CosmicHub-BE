@@ -455,6 +455,42 @@ class MovementController {
       }
     }
   }
+
+  // Crea un movimento di carico su furgone
+  static async createLoadToVehicleMovement(req, res, db) {
+    try {
+      console.log("createLoadToVehicleMovement");
+      console.log(req.body);
+      const data = req.body;
+      const company_id = req.session.account.company_id;
+      const created_by = req.session.account.user_id;
+      if (
+        !data.product_id ||
+        !data.from_warehouse_id ||
+        !data.to_vehicle_id ||
+        !data.amount
+      ) {
+        return res.status(400).json({
+          error:
+            "product_id, from_warehouse_id, to_vehicle_id e amount sono richiesti",
+        });
+      }
+      const result = await Movement.createLoadToVehicleMovement(
+        db,
+        data,
+        company_id,
+        created_by
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(500).json({
+        error:
+          error.message ||
+          "Errore nella creazione del movimento di carico su furgone",
+      });
+      console.error("Stack trace:", error.stack);
+    }
+  }
 }
 
 module.exports = MovementController;

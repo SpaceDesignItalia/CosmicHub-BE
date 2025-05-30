@@ -849,6 +849,68 @@ class MovementModel {
       }
     });
   }
+
+  // Crea un movimento di carico su furgone
+  static async createLoadToVehicleMovement(db, data, company_id, created_by) {
+    return new Promise((resolve, reject) => {
+      // Verifica che il prodotto appartenga alla company
+      const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1 AND company_id = $2`;
+      db.query(
+        productQuery,
+        [data.product_id, company_id],
+        (err, productResult) => {
+          if (err) return reject(err);
+          if (!productResult.rows || productResult.rows.length === 0)
+            return reject(new Error("Prodotto non trovato o non autorizzato"));
+
+          // Inserisci il movimento
+          const insertQuery = `
+          INSERT INTO public."ProductMovement"
+          (product_id, from_warehouse_id, to_vehicle_id, amount, movement_type_id, movement_date, created_by)
+          VALUES ($1, $2, $3, $4, 1, $5, $6)
+          RETURNING movement_id
+        `;
+          const values = [
+            data.product_id,
+            data.from_warehouse_id,
+            data.to_vehicle_id,
+            data.amount,
+            data.movement_date || new Date(),
+            created_by,
+          ];
+          db.query(insertQuery, values, async (err, result) => {
+            if (err) return reject(err);
+            if (!result.rows || result.rows.length === 0)
+              return reject(new Error("Errore nell'inserimento del movimento"));
+
+            // Sottrai la quantità dal magazzino di origine
+            const subtractQuery = `
+              UPDATE public."Product"
+              SET stock_unit = COALESCE(stock_unit, 0) - $1
+              WHERE product_id = $2 AND warehouse_id = $3 AND COALESCE(stock_unit, 0) >= $1
+            `;
+            db.query(
+              subtractQuery,
+              [data.amount, data.product_id, data.from_warehouse_id],
+              (err, result2) => {
+                if (err) return reject(err);
+                if (result2.rowCount === 0) {
+                  return reject(
+                    new Error("Stock insufficiente nel magazzino di origine")
+                  );
+                }
+                resolve({
+                  movement_id: result.rows[0].movement_id,
+                  message:
+                    "Movimento di carico su furgone creato con successo e stock aggiornato",
+                });
+              }
+            );
+          });
+        }
+      );
+    });
+  }
 }
 
 module.exports = MovementModel;

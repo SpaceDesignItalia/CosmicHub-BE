@@ -25,6 +25,15 @@ const movementPOST = (db) => {
     MovementController.createMovement(req, res, db);
   });
 
+  // Crea un nuovo movimento di carico su furgone
+  router.post(
+    "/CreateLoadToVehicleMovement",
+    authenticateMiddleware,
+    (req, res) => {
+      MovementController.createLoadToVehicleMovement(req, res, db);
+    }
+  );
+
   return router;
 };
 
