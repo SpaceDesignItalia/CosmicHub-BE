@@ -511,6 +511,48 @@ class ProductModel {
     });
   }
 
+  static async deleteProduct(db, product_id, company_id) {
+    return new Promise((resolve, reject) => {
+      // Prima elimino gli attributi associati al prodotto
+      const deleteAttributesQuery = `DELETE FROM public."Attribute" WHERE product_id = $1`;
+      db.query(deleteAttributesQuery, [product_id], (err, result) => {
+        if (err) {
+          console.error("Errore nell'eliminazione degli attributi:", err);
+          reject(err);
+          return;
+        }
+
+        // Poi elimino il prodotto, verificando che appartenga alla company corretta
+        const deleteProductQuery = `DELETE FROM public."Product" WHERE product_id = $1 AND company_id = $2 RETURNING product_id`;
+        db.query(
+          deleteProductQuery,
+          [product_id, company_id],
+          (err, result) => {
+            if (err) {
+              console.error("Errore nell'eliminazione del prodotto:", err);
+              reject(err);
+              return;
+            }
+
+            if (!result.rows || result.rows.length === 0) {
+              reject(
+                new Error(
+                  "Prodotto non trovato o non autorizzato all'eliminazione"
+                )
+              );
+              return;
+            }
+
+            resolve({
+              product_id: result.rows[0].product_id,
+              message: "Prodotto eliminato con successo",
+            });
+          }
+        );
+      });
+    });
+  }
+
   static async getAllProductMovements(db) {
     return new Promise((resolve, reject) => {
       const query = `SELECT 
