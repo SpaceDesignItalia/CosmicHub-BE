@@ -586,7 +586,7 @@ class ProductModel {
     LEFT JOIN public."Vehicle" AS V_to ON V_to."vehicle_id" = PM.to_vehicle_id
     LEFT JOIN public."Supplier" AS S ON S."SupplierId" = PM.from_supplier
     INNER JOIN public."User" AS U ON U."user_id" = PM.created_by
-    ORDER BY PM.movement_id ASC;
+    ORDER BY PM.movement_date DESC;
 
       `;
 
