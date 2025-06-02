@@ -145,8 +145,8 @@ class MovementModel {
           const insertQuery = `
           INSERT INTO public."ProductMovement" 
           (product_id, from_warehouse_id, from_vehicle_id, to_warehouse_id, to_vehicle_id, 
-           amount, movement_type_id, movement_date, from_supplier)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           amount, movement_type_id, movement_date, from_supplier, created_by)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           RETURNING movement_id
         `;
 
@@ -160,6 +160,7 @@ class MovementModel {
             data.movement_type_id,
             data.movement_date || new Date(),
             fromSupplier,
+            created_by,
           ];
 
           db.query(insertQuery, values, (err, result) => {
