@@ -10,7 +10,6 @@ class ProductModel {
           if (err) {
             console.error("Errore nella query getAllCategories:", err);
             reject(err);
-            return;
           }
           resolve(result.rows);
         }
@@ -27,7 +26,6 @@ class ProductModel {
           if (err) {
             console.error("Errore nella query getProductsByWarehouse:", err);
             reject(err);
-            return;
           }
           resolve(result.rows);
         }
@@ -42,12 +40,10 @@ class ProductModel {
         if (err) {
           console.error("Errore nella query getProductById:", err);
           reject(err);
-          return;
         }
 
         if (!result.rows || result.rows.length === 0) {
           reject(new Error("Prodotto non trovato o non autorizzato"));
-          return;
         }
 
         const product = result.rows[0];
@@ -61,7 +57,6 @@ class ProductModel {
           if (err) {
             console.error("Errore nella query attributi:", err);
             reject(err);
-            return;
           }
 
           product.attributes = attributesResult.rows;
@@ -79,7 +74,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nella query categoria:", err);
           reject(err);
-          return;
         }
         if (!result.rows || result.rows.length === 0) {
           reject(
@@ -87,7 +81,6 @@ class ProductModel {
               `Categoria '${data.category}' non trovata per questa azienda`
             )
           );
-          return;
         }
         const productQuery = `INSERT INTO public."Product" (name, company_id, category_id, sku, description, 
         price, min_stock_treshold, barcode, qr_code, supplier_id, brand_id, weight, dimensions, location, notes, cost_price, 
@@ -124,7 +117,6 @@ class ProductModel {
             if (err) {
               console.error("Errore nell'inserimento del prodotto:", err);
               reject(err);
-              return;
             }
             if (!result.rows || result.rows.length === 0) {
               reject(
@@ -132,7 +124,6 @@ class ProductModel {
                   "Errore nell'inserimento del prodotto: nessun ID restituito"
                 )
               );
-              return;
             }
             const product_id = result.rows[0].product_id;
 
@@ -142,7 +133,6 @@ class ProductModel {
                 product_id: product_id,
                 message: "Prodotto creato con successo",
               });
-              return;
             }
 
             const attributesQuery = `INSERT INTO public."Attribute" (name, data_type, value, is_required, created_by, product_id) VALUES ($1, $2, $3, $4, $5, $6)`;
@@ -185,7 +175,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nella verifica del prodotto:", err);
           reject(err);
-          return;
         }
 
         if (!result.rows || result.rows.length === 0) {
@@ -194,7 +183,6 @@ class ProductModel {
               "Prodotto non trovato o non autorizzato all'aggiornamento"
             )
           );
-          return;
         }
 
         // Se è stata fornita una categoria, verifico che esista
@@ -208,7 +196,6 @@ class ProductModel {
               if (err) {
                 console.error("Errore nella query categoria:", err);
                 reject(err);
-                return;
               }
               if (!categoryResult.rows || categoryResult.rows.length === 0) {
                 reject(
@@ -216,7 +203,6 @@ class ProductModel {
                     `Categoria '${data.category}' non trovata per questa azienda`
                   )
                 );
-                return;
               }
 
               // Procedo con l'aggiornamento includendo la categoria
@@ -326,7 +312,6 @@ class ProductModel {
               product_id: product_id,
               message: "Nessun campo da aggiornare",
             });
-            return;
           }
 
           const updateQuery = `UPDATE public."Product" SET ${updateFields.join(
@@ -339,7 +324,6 @@ class ProductModel {
             if (err) {
               console.error("Errore nell'aggiornamento del prodotto:", err);
               reject(err);
-              return;
             }
 
             // Gestisco gli attributi se forniti
@@ -356,7 +340,6 @@ class ProductModel {
                       err
                     );
                     reject(err);
-                    return;
                   }
 
                   // Poi inserisco i nuovi attributi
@@ -377,7 +360,6 @@ class ProductModel {
                       (err, result) => {
                         if (err) {
                           reject(err);
-                          return;
                         }
                         attributesProcessed++;
                         if (attributesProcessed === data.attributes.length) {
@@ -412,7 +394,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nell'inserimento della categoria:", err);
           reject(err);
-          return;
         }
         if (!result.rows || result.rows.length === 0) {
           reject(
@@ -420,7 +401,6 @@ class ProductModel {
               "Errore nell'inserimento della categoria: nessun ID restituito"
             )
           );
-          return;
         }
         console.log(result);
 
@@ -430,7 +410,6 @@ class ProductModel {
             category_id: result.rows[0].category_id,
             message: "Categoria creata con successo",
           });
-          return;
         }
 
         let attributesProcessed = 0;
@@ -466,7 +445,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nella query getAllProducts:", err);
           reject(err);
-          return;
         }
 
         try {
@@ -504,7 +482,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nell'aggiornamento della quantità:", err);
           reject(err);
-          return;
         }
         resolve(result);
       });
@@ -519,7 +496,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nell'eliminazione degli attributi:", err);
           reject(err);
-          return;
         }
 
         // Poi elimino il prodotto, verificando che appartenga alla company corretta
@@ -531,7 +507,6 @@ class ProductModel {
             if (err) {
               console.error("Errore nell'eliminazione del prodotto:", err);
               reject(err);
-              return;
             }
 
             if (!result.rows || result.rows.length === 0) {
@@ -540,7 +515,6 @@ class ProductModel {
                   "Prodotto non trovato o non autorizzato all'eliminazione"
                 )
               );
-              return;
             }
 
             resolve({
@@ -594,7 +568,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nella query getAllProductMovements:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -609,7 +582,6 @@ class ProductModel {
         if (err) {
           console.error("Errore nell'eliminazione degli attributi:", err);
           reject(err);
-          return;
         }
 
         // Poi elimino il prodotto, verificando che appartenga alla company corretta
@@ -621,7 +593,6 @@ class ProductModel {
             if (err) {
               console.error("Errore nell'eliminazione del prodotto:", err);
               reject(err);
-              return;
             }
 
             if (!result.rows || result.rows.length === 0) {
@@ -630,7 +601,6 @@ class ProductModel {
                   "Prodotto non trovato o non autorizzato all'eliminazione"
                 )
               );
-              return;
             }
 
             resolve({

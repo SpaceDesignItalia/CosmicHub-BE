@@ -27,7 +27,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getAllMovements:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -57,12 +56,10 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementById:", err);
           reject(err);
-          return;
         }
 
         if (!result.rows || result.rows.length === 0) {
           reject(new Error("Movimento non trovato o non autorizzato"));
-          return;
         }
 
         resolve(result.rows[0]);
@@ -79,7 +76,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementTypes:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -99,7 +95,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getWarehouseIdByNameOrCode:", err);
           reject(err);
-          return;
         }
 
         if (result.rows && result.rows.length > 0) {
@@ -124,12 +119,10 @@ class MovementModel {
           if (err) {
             console.error("Errore nella verifica del prodotto:", err);
             reject(err);
-            return;
           }
 
           if (!productResult.rows || productResult.rows.length === 0) {
             reject(new Error("Prodotto non trovato o non autorizzato"));
-            return;
           }
 
           // Gestione corretta del campo from_supplier (deve essere bigint o null)
@@ -167,7 +160,6 @@ class MovementModel {
             if (err) {
               console.error("Errore nell'inserimento del movimento:", err);
               reject(err);
-              return;
             }
 
             if (!result.rows || result.rows.length === 0) {
@@ -176,7 +168,6 @@ class MovementModel {
                   "Errore nell'inserimento del movimento: nessun ID restituito"
                 )
               );
-              return;
             }
 
             const movement_id = result.rows[0].movement_id;
@@ -221,7 +212,6 @@ class MovementModel {
                       err
                     );
                     rej(err);
-                    return;
                   }
                   res();
                 }
@@ -247,7 +237,6 @@ class MovementModel {
                       err
                     );
                     rej(err);
-                    return;
                   }
 
                   if (result.rowCount === 0) {
@@ -256,7 +245,6 @@ class MovementModel {
                         "Stock insufficiente per il movimento di scarico"
                       )
                     );
-                    return;
                   }
 
                   res();
@@ -272,7 +260,6 @@ class MovementModel {
                   "Trasferimento richiede sia from_warehouse_id che to_warehouse_id"
                 )
               );
-              return;
             }
 
             // Prima recuperiamo i dati del prodotto originale
@@ -287,11 +274,9 @@ class MovementModel {
                 (err, result) => {
                   if (err) {
                     rej(err);
-                    return;
                   }
                   if (!result.rows || result.rows.length === 0) {
                     rej(new Error("Prodotto originale non trovato"));
-                    return;
                   }
                   res(result.rows[0]);
                 }
@@ -315,7 +300,6 @@ class MovementModel {
                 (err, result) => {
                   if (err) {
                     rej(err);
-                    return;
                   }
                   res(
                     result.rows && result.rows.length > 0
@@ -341,7 +325,6 @@ class MovementModel {
                   (err, result) => {
                     if (err) {
                       rej(err);
-                      return;
                     }
                     res();
                   }
@@ -387,7 +370,6 @@ class MovementModel {
                 db.query(createProductQuery, values, (err, result) => {
                   if (err) {
                     rej(err);
-                    return;
                   }
                   res();
                 });
@@ -408,7 +390,6 @@ class MovementModel {
                 (err, result) => {
                   if (err) {
                     rej(err);
-                    return;
                   }
 
                   if (result.rowCount === 0) {
@@ -417,7 +398,6 @@ class MovementModel {
                         "Stock insufficiente nel magazzino di origine per il trasferimento"
                       )
                     );
-                    return;
                   }
 
                   res();
@@ -429,7 +409,6 @@ class MovementModel {
 
           default:
             reject(new Error("Tipo di movimento non valido"));
-            return;
         }
 
         resolve({
@@ -467,7 +446,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementsByProduct:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -498,7 +476,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementsByWarehouse:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -529,7 +506,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementsByType:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -560,7 +536,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella query getMovementsByDate:", err);
           reject(err);
-          return;
         }
         resolve(result.rows);
       });
@@ -581,7 +556,6 @@ class MovementModel {
         if (err) {
           console.error("Errore nella verifica del movimento:", err);
           reject(err);
-          return;
         }
 
         if (!result.rows || result.rows.length === 0) {
@@ -590,7 +564,6 @@ class MovementModel {
               "Movimento non trovato o non autorizzato all'aggiornamento"
             )
           );
-          return;
         }
 
         // Costruiamo dinamicamente la query di aggiornamento
@@ -644,7 +617,6 @@ class MovementModel {
             movement_id: movement_id,
             message: "Nessun campo da aggiornare",
           });
-          return;
         }
 
         const updateQuery = `
@@ -658,7 +630,6 @@ class MovementModel {
           if (err) {
             console.error("Errore nell'aggiornamento del movimento:", err);
             reject(err);
-            return;
           }
 
           resolve({
@@ -688,7 +659,6 @@ class MovementModel {
             if (err) {
               console.error("Errore nella verifica del movimento:", err);
               rej(err);
-              return;
             }
             res(result);
           });
@@ -700,7 +670,6 @@ class MovementModel {
               "Movimento non trovato o non autorizzato all'eliminazione"
             )
           );
-          return;
         }
 
         const movement = result.rows[0];
@@ -725,7 +694,6 @@ class MovementModel {
                       err
                     );
                     rej(err);
-                    return;
                   }
 
                   if (revertResult.rowCount === 0) {
@@ -734,7 +702,6 @@ class MovementModel {
                         "Impossibile eliminare il movimento: stock insufficiente"
                       )
                     );
-                    return;
                   }
 
                   res();
@@ -761,7 +728,6 @@ class MovementModel {
                       err
                     );
                     rej(err);
-                    return;
                   }
                   res();
                 }
@@ -789,7 +755,6 @@ class MovementModel {
                   (err, result) => {
                     if (err) {
                       rej(err);
-                      return;
                     }
                     res();
                   }
@@ -816,7 +781,6 @@ class MovementModel {
                   (err, result) => {
                     if (err) {
                       rej(err);
-                      return;
                     }
                     res();
                   }
@@ -834,7 +798,6 @@ class MovementModel {
             if (err) {
               console.error("Errore nell'eliminazione del movimento:", err);
               rej(err);
-              return;
             }
             res();
           });
