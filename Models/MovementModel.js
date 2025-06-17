@@ -118,11 +118,11 @@ class MovementModel {
         (err, productResult) => {
           if (err) {
             console.error("Errore nella verifica del prodotto:", err);
-            reject(err);
+            return reject(err);
           }
 
           if (!productResult.rows || productResult.rows.length === 0) {
-            reject(new Error("Prodotto non trovato o non autorizzato"));
+            return reject(new Error("Prodotto non trovato o non autorizzato"));
           }
 
           // Gestione corretta del campo from_supplier (deve essere bigint o null)
@@ -555,11 +555,11 @@ class MovementModel {
       db.query(checkQuery, [movement_id, company_id], (err, result) => {
         if (err) {
           console.error("Errore nella verifica del movimento:", err);
-          reject(err);
+          return reject(err);
         }
 
         if (!result.rows || result.rows.length === 0) {
-          reject(
+          return reject(
             new Error(
               "Movimento non trovato o non autorizzato all'aggiornamento"
             )
