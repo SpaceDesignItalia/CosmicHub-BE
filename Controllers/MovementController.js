@@ -270,14 +270,16 @@ class MovementController {
   // Crea un movimento generico
   static async createMovement(req, res, db) {
     try {
-      const data = req.body;
+      const data = req.body.stockModalState;
       const company_id = req.session.account.company_id;
       const created_by = req.session.account.user_id;
 
+      console.log("data", data);
+
       // Validazione di base
-      if (!data.product_id || !data.amount || !data.movement_type_id) {
+      if (!data.selectedProduct.product_id || !data.amount || !data.type) {
         return res.status(400).json({
-          error: "product_id, amount e movement_type_id sono richiesti",
+          error: "selectedProduct.product_id, amount e type sono richiesti",
         });
       }
 

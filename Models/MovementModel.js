@@ -110,11 +110,11 @@ class MovementModel {
   static async createMovement(db, data, company_id, created_by) {
     return new Promise((resolve, reject) => {
       // Prima verifichiamo che il prodotto appartenga alla company
-      const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1 AND company_id = $2`;
+      const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1`;
 
       db.query(
         productQuery,
-        [data.product_id, company_id],
+        [data.selectedProduct.product_id],
         (err, productResult) => {
           if (err) {
             console.error("Errore nella verifica del prodotto:", err);
@@ -134,6 +134,12 @@ class MovementModel {
             }
           }
 
+          if (data.type === "increase") {
+            data.movement_type_id = 4;
+          } else if (data.type === "decrease") {
+            data.movement_type_id = 5;
+          }
+
           // Procediamo con l'inserimento del movimento
           const insertQuery = `
           INSERT INTO public."ProductMovement" 
@@ -144,7 +150,7 @@ class MovementModel {
         `;
 
           const values = [
-            data.product_id,
+            data.selectedProduct.product_id,
             data.from_warehouse_id || null,
             data.from_vehicle_id || null,
             data.to_warehouse_id || null,
@@ -407,6 +413,10 @@ class MovementModel {
 
             break;
 
+          case 4: // Carico - aumenta lo stock
+            break;
+          case 5: // Scarico - diminuisce lo stock
+            break;
           default:
             reject(new Error("Tipo di movimento non valido"));
         }
