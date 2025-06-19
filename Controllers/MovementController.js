@@ -461,9 +461,12 @@ class MovementController {
   // Crea un movimento di carico su furgone
   static async createLoadToVehicleMovement(req, res, db) {
     try {
-      console.log("createLoadToVehicleMovement");
-      console.log(req.body);
-      const data = req.body;
+      const data = {
+        product_id: req.body.product_id,
+        from_warehouse_id: req.body.from_warehouse_id,
+        to_vehicle_id: req.body.to_vehicle_id,
+        amount: req.body.amount,
+      };
       const company_id = req.session.account.company_id;
       const created_by = req.session.account.user_id;
       if (
