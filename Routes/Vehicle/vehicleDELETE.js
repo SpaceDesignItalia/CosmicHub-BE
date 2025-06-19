@@ -11,6 +11,14 @@ const vehicleDELETE = (db) => {
       VehicleController.deleteVehicle(req, res, db);
     }
   );
+
+  router.delete(
+    "/DeleteFromVehicleInventory",
+    authenticateMiddleware,
+    (req, res) => {
+      VehicleController.deleteFromVehicleInventory(req, res, db);
+    }
+  );
   return router;
 };
 

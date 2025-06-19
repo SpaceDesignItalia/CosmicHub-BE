@@ -94,6 +94,61 @@ class VehicleModel {
       );
     });
   }
+
+  static async getVehicleInventory(db, vehicle_id) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT VI.vehicle_inventory_id, VI.amount, P.name, P.weight, P.stock_unit, C.name as category_name
+        FROM public."Vehicle_Inventory" VI
+        INNER JOIN public."Product" P ON VI.product_id = P.product_id
+        INNER JOIN public."Category" C ON P.category_id = C.category_id
+        WHERE VI.vehicle_id = $1`,
+        [vehicle_id],
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result.rows);
+        }
+      );
+    });
+  }
+
+  static async deleteFromVehicleInventory(db, vehicle_inventory_id, amount) {
+    return new Promise((resolve, reject) => {
+      const selectVehicleInventoryQuery = `SELECT amount FROM public."Vehicle_Inventory" WHERE vehicle_inventory_id = $1`;
+      db.query(
+        selectVehicleInventoryQuery,
+        [vehicle_inventory_id],
+        (err, result) => {
+          if (err) reject(err);
+          else {
+            if (result.rows[0].amount < amount) {
+              reject(new Error("Quantità insufficiente nell'inventario"));
+            } else if (result.rows[0].amount === amount) {
+              const deleteVehicleInventoryQuery = `DELETE FROM public."Vehicle_Inventory" WHERE vehicle_inventory_id = $1`;
+              db.query(
+                deleteVehicleInventoryQuery,
+                [vehicle_inventory_id],
+                (err, result) => {
+                  if (err) reject(err);
+                  else resolve(result.rows[0]);
+                }
+              );
+            } else {
+              const updateVehicleInventoryQuery = `UPDATE public."Vehicle_Inventory" SET amount = amount - $1 WHERE vehicle_inventory_id = $2`;
+              db.query(
+                updateVehicleInventoryQuery,
+                [amount, vehicle_inventory_id],
+                (err, result) => {
+                  if (err) reject(err);
+                  else resolve(result.rows[0]);
+                }
+              );
+            }
+          }
+        }
+      );
+    });
+  }
 }
 
 module.exports = VehicleModel;
