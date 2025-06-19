@@ -32,6 +32,14 @@ class AuthenticationController {
     try {
       const LoginData = req.body.LoginData;
       let account = await Authentication.login(db, LoginData);
+
+      // Se account è false, significa che l'email non esiste
+      if (account === false) {
+        return res.status(401).json({
+          error: "Credenziali non valide",
+        });
+      }
+
       // Imposta la durata del cookie di sessione
       req.session.cookie.maxAge = LoginData.rememberMe
         ? 30 * 24 * 60 * 60 * 1000 // 30 giorni in millisecondi
@@ -46,7 +54,18 @@ class AuthenticationController {
       });
     } catch (error) {
       console.error("Errore nel login:", error);
-      res.status(500).send("Recupero dell'account fallito");
+
+      // Se l'errore è false, significa password errata
+      if (error === false) {
+        return res.status(401).json({
+          error: "Credenziali non valide",
+        });
+      }
+
+      // Per tutti gli altri errori (problemi del server)
+      res.status(500).json({
+        error: "Errore interno del server",
+      });
     }
   }
 
