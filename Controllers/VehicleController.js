@@ -65,6 +65,34 @@ class VehicleController {
       res.status(500).json({ error: "Errore nell'eliminazione del veicolo" });
     }
   }
+
+  static async getVehicleInventory(req, res, db) {
+    try {
+      const { vehicle_id } = req.query;
+      const vehicleInventory = await VehicleModel.getVehicleInventory(
+        db,
+        vehicle_id
+      );
+      res.status(200).json(vehicleInventory);
+      console.log("vehicleInventory", vehicleInventory);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Errore nel recupero dell'inventario del veicolo" });
+    }
+  }
+
+  static async deleteFromVehicleInventory(req, res, db) {
+    try {
+      const { product_id, amount } = req.query;
+      const vehicleInventory = await VehicleModel.deleteFromVehicleInventory(
+        db,
+        product_id,
+        amount
+      );
+      res.status(200).json(vehicleInventory);
+    } catch (error) {}
+  }
 }
 
 module.exports = VehicleController;

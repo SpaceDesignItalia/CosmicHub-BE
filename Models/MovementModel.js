@@ -828,61 +828,89 @@ class MovementModel {
   static async createLoadToVehicleMovement(db, data, company_id, created_by) {
     return new Promise((resolve, reject) => {
       // Verifica che il prodotto appartenga alla company
-      const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1 AND company_id = $2`;
-      db.query(
-        productQuery,
-        [data.product_id, company_id],
-        (err, productResult) => {
-          if (err) return reject(err);
-          if (!productResult.rows || productResult.rows.length === 0)
-            return reject(new Error("Prodotto non trovato o non autorizzato"));
+      const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1`;
+      db.query(productQuery, [data.product_id], (err, productResult) => {
+        if (err) return reject(err);
+        if (!productResult.rows || productResult.rows.length === 0)
+          return reject(new Error("Prodotto non trovato o non autorizzato"));
 
-          // Inserisci il movimento
-          const insertQuery = `
+        // Inserisci il movimento
+        const insertQuery = `
           INSERT INTO public."ProductMovement"
           (product_id, from_warehouse_id, to_vehicle_id, amount, movement_type_id, movement_date, created_by)
           VALUES ($1, $2, $3, $4, 1, $5, $6)
           RETURNING movement_id
         `;
-          const values = [
-            data.product_id,
-            data.from_warehouse_id,
-            data.to_vehicle_id,
-            data.amount,
-            data.movement_date || new Date(),
-            created_by,
-          ];
-          db.query(insertQuery, values, async (err, result) => {
-            if (err) return reject(err);
-            if (!result.rows || result.rows.length === 0)
-              return reject(new Error("Errore nell'inserimento del movimento"));
+        const values = [
+          data.product_id,
+          data.from_warehouse_id,
+          data.to_vehicle_id,
+          data.amount,
+          data.movement_date || new Date(),
+          created_by,
+        ];
+        db.query(insertQuery, values, async (err, result) => {
+          if (err) return reject(err);
+          if (!result.rows || result.rows.length === 0)
+            return reject(new Error("Errore nell'inserimento del movimento"));
 
-            // Sottrai la quantità dal magazzino di origine
-            const subtractQuery = `
+          // Sottrai la quantità dal magazzino di origine
+          const subtractQuery = `
               UPDATE public."Product"
               SET stock_unit = COALESCE(stock_unit, 0) - $1
               WHERE product_id = $2 AND warehouse_id = $3 AND COALESCE(stock_unit, 0) >= $1
             `;
-            db.query(
-              subtractQuery,
-              [data.amount, data.product_id, data.from_warehouse_id],
-              (err, result2) => {
-                if (err) return reject(err);
-                if (result2.rowCount === 0) {
-                  return reject(
-                    new Error("Stock insufficiente nel magazzino di origine")
-                  );
-                }
-                resolve({
-                  movement_id: result.rows[0].movement_id,
-                  message:
-                    "Movimento di carico su furgone creato con successo e stock aggiornato",
-                });
+          db.query(
+            subtractQuery,
+            [data.amount, data.product_id, data.from_warehouse_id],
+            (err, result2) => {
+              if (err) return reject(err);
+              if (result2.rowCount === 0) {
+                return reject(
+                  new Error("Stock insufficiente nel magazzino di origine")
+                );
               }
-            );
-          });
-        }
-      );
+              const selectVehicleInventoryQuery = `SELECT vehicle_inventory_id FROM public."Vehicle_Inventory" WHERE product_id = $1 AND vehicle_id = $2`;
+              db.query(
+                selectVehicleInventoryQuery,
+                [data.product_id, data.to_vehicle_id],
+                (err, result3) => {
+                  if (err) return reject(err);
+                  if (!result3.rows || result3.rows.length === 0) {
+                    const insertVehicleInventoryQuery = `INSERT INTO public."Vehicle_Inventory" (product_id, vehicle_id, amount) VALUES ($1, $2, $3)`;
+                    db.query(
+                      insertVehicleInventoryQuery,
+                      [data.product_id, data.to_vehicle_id, data.amount],
+                      (err, result4) => {
+                        if (err) return reject(err);
+                        resolve({
+                          movement_id: result.rows[0].movement_id,
+                          message:
+                            "Movimento di carico su furgone creato con successo e stock aggiornato",
+                        });
+                      }
+                    );
+                  } else {
+                    const updateVehicleInventoryQuery = `UPDATE public."Vehicle_Inventory" SET amount = amount + $1 WHERE vehicle_inventory_id = $2`;
+                    db.query(
+                      updateVehicleInventoryQuery,
+                      [data.amount, result3.rows[0].vehicle_inventory_id],
+                      (err, result4) => {
+                        if (err) return reject(err);
+                        resolve({
+                          movement_id: result.rows[0].movement_id,
+                          message:
+                            "Movimento di carico su furgone creato con successo e stock aggiornato",
+                        });
+                      }
+                    );
+                  }
+                }
+              );
+            }
+          );
+        });
+      });
     });
   }
 }
