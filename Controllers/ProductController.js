@@ -73,6 +73,7 @@ class ProductController {
       const attributes = req.body.attributes;
       const company_id = req.session.account.company_id;
       const created_by = req.session.account.user_id;
+
       const category = await Product.createNewCategory(
         db,
         name,

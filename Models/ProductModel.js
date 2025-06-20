@@ -402,7 +402,6 @@ class ProductModel {
             )
           );
         }
-        console.log(result);
 
         // Se non ci sono attributi, risolvi immediatamente
         if (!attributes || attributes.length === 0) {
@@ -411,16 +410,18 @@ class ProductModel {
             message: "Categoria creata con successo",
           });
         }
+        let category_id = result.rows[0].category_id;
 
         let attributesProcessed = 0;
         attributes.forEach((attribute) => {
-          const attributesQuery = `INSERT INTO public."Category_Attribute" (category_id, name, type, created_by) VALUES ($1, $2, $3, $4)`;
+          const attributesQuery = `INSERT INTO public."Category_Attribute" (category_id, name, type, "isRequired", created_by) VALUES ($1, $2, $3, $4, $5) RETURNING category_id`;
           db.query(
             attributesQuery,
             [
               result.rows[0].category_id,
               attribute.name,
               attribute.type,
+              attribute.isRequired,
               created_by,
             ],
             (err, result) => {
@@ -428,7 +429,7 @@ class ProductModel {
               attributesProcessed++;
               if (attributesProcessed === attributes.length) {
                 resolve({
-                  category_id: result.rows[0].category_id,
+                  category_id: category_id,
                   message: "Categoria e attributi creati con successo",
                 });
               }
