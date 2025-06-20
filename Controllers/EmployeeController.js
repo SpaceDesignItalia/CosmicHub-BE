@@ -140,9 +140,9 @@ class EmployeeController {
     }
   }
 
-  static async getEmplyeesWithoutVehicle(req, res, db) {
+  static async getEmployeesWithoutVehicle(req, res, db) {
     try {
-      const employees = await Employee.getEmplyeesWithoutVehicle(db);
+      const employees = await Employee.getEmployeesWithoutVehicle(db);
       res.status(200).json(employees);
     } catch (error) {
       console.error(
@@ -152,6 +152,19 @@ class EmployeeController {
       res
         .status(500)
         .json({ error: "Recupero degli impiegati senza veicolo fallito" });
+    }
+  }
+
+  static async getUserByVehicleId(req, res, db) {
+    try {
+      const vehicle_id = req.query.vehicle_id;
+      const user = await Employee.getUserByVehicleId(db, vehicle_id);
+      res.status(200).json(user);
+    } catch (error) {
+      console.error("Errore nel recupero dell'utente per veicolo:", error);
+      res
+        .status(500)
+        .json({ error: "Recupero dell'utente per veicolo fallito" });
     }
   }
 }

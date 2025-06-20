@@ -18,12 +18,16 @@ const employeeGET = (db) => {
   });
 
   router.get(
-    "/GetEmplyeesWithoutVehicle",
+    "/GetEmployeesWithoutVehicle",
     authenticateMiddleware,
     (req, res) => {
-      EmployeeController.getEmplyeesWithoutVehicle(req, res, db);
+      EmployeeController.getEmployeesWithoutVehicle(req, res, db);
     }
   );
+
+  router.get("/GetUserByVehicleId", authenticateMiddleware, (req, res) => {
+    EmployeeController.getUserByVehicleId(req, res, db);
+  });
 
   return router;
 };

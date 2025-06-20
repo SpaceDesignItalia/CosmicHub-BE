@@ -182,14 +182,29 @@ class EmployeeModel {
     });
   }
 
-  static async getEmplyeesWithoutVehicle(db) {
+  static async getEmployeesWithoutVehicle(db) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" WHERE user_id NOT IN (SELECT user_id FROM public."Warehouse_User")`;
+      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" 
+      WHERE user_id NOT IN (SELECT assigned_user_id as user_id FROM public."Vehicle" WHERE assigned_user_id IS NOT NULL)`;
       db.query(query, (error, result) => {
         if (error) {
           reject(error);
         } else {
           resolve(result.rows);
+        }
+      });
+    });
+  }
+
+  static async getUserByVehicleId(db, vehicle_id) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" 
+      WHERE "Vehicle"."vehicle_id" = $1`;
+      db.query(query, [vehicle_id], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
         }
       });
     });

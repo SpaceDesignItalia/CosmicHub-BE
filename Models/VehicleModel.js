@@ -51,30 +51,19 @@ class VehicleModel {
     });
   }
 
-  static async updateVehicle(db, vehicle_id, data) {
+  static async updateVehicle(db, data) {
+    console.log("data", data);
     return new Promise((resolve, reject) => {
-      const fields = [];
-      const values = [];
-      let idx = 1;
-      for (const key of [
-        "name",
-        "license_plate",
-        "capacity",
-        "type",
-        "last_inspection",
-        "assigned_user_id",
-        "location",
-      ]) {
-        if (data[key] !== undefined) {
-          fields.push(`${key} = $${idx++}`);
-          values.push(data[key]);
-        }
-      }
-      if (fields.length === 0) return resolve(null);
-      values.push(vehicle_id);
-      const query = `UPDATE public."Vehicle" SET ${fields.join(
-        ", "
-      )} WHERE vehicle_id = $${idx} RETURNING *`;
+      const query = `UPDATE public."Vehicle" SET name = $1, license_plate = $2, capacity = $3, type = $4, last_inspection = $5, assigned_user_id = $6 WHERE vehicle_id = $7 RETURNING *`;
+      const values = [
+        data.name,
+        data.license_plate,
+        data.capacity,
+        data.type,
+        data.last_inspection_date,
+        data.assigned_user_id,
+        data.vehicle_id,
+      ];
       db.query(query, values, (err, result) => {
         if (err) reject(err);
         else resolve(result.rows[0]);

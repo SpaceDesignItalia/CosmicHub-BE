@@ -38,18 +38,14 @@ class VehicleController {
 
   static async updateVehicle(req, res, db) {
     try {
-      const { vehicle_id } = req.params;
-      const vehicle = await VehicleModel.updateVehicle(
-        db,
-        vehicle_id,
-        req.body
-      );
+      const vehicle = await VehicleModel.updateVehicle(db, req.body);
       if (!vehicle)
         return res
           .status(404)
           .json({ error: "Veicolo non trovato o nessun campo aggiornato" });
       res.status(200).json(vehicle);
     } catch (error) {
+      console.log("error", error);
       res.status(500).json({ error: "Errore nell'aggiornamento del veicolo" });
     }
   }
@@ -92,11 +88,9 @@ class VehicleController {
       );
       res.status(200).json(vehicleInventory);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          error: "Errore nell'eliminazione dell'inventario del veicolo",
-        });
+      res.status(500).json({
+        error: "Errore nell'eliminazione dell'inventario del veicolo",
+      });
     }
   }
 

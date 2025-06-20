@@ -4,13 +4,9 @@ const VehicleController = require("../../Controllers/VehicleController");
 const authenticateMiddleware = require("../../middlewares/Authentication/Authmiddleware");
 
 const vehicleUPDATE = (db) => {
-  router.put(
-    "/UpdateVehicle/:vehicle_id",
-    authenticateMiddleware,
-    (req, res) => {
-      VehicleController.updateVehicle(req, res, db);
-    }
-  );
+  router.put("/UpdateVehicle", authenticateMiddleware, (req, res) => {
+    VehicleController.updateVehicle(req, res, db);
+  });
   return router;
 };
 
