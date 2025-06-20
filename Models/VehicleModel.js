@@ -149,6 +149,18 @@ class VehicleModel {
       );
     });
   }
+
+  static async getAvailableVehicles(db) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        `SELECT * FROM public."Vehicle" WHERE assigned_user_id IS NULL`,
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result.rows);
+        }
+      );
+    });
+  }
 }
 
 module.exports = VehicleModel;

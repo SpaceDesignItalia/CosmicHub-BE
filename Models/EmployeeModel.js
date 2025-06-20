@@ -4,9 +4,10 @@ const bcrypt = require("bcrypt");
 class EmployeeModel {
   static getAllEmployees(db) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT "User"."user_id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "Role"."name" as "role" FROM public."User" 
+      const query = `SELECT "User"."user_id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "Role"."name" as "role", "vehicle_id", "Vehicle"."name" as "vehicle_name", "Vehicle"."license_plate" FROM public."User" 
       INNER JOIN public."Role_User" USING (user_id)
-      INNER JOIN public."Role" USING (role_id)`;
+      INNER JOIN public."Role" USING (role_id)
+      LEFT JOIN public."Vehicle" ON "Vehicle"."assigned_user_id" = "User"."user_id"`;
       db.query(query, (error, result) => {
         if (error) {
           reject(error);
@@ -148,14 +149,21 @@ class EmployeeModel {
     });
   }
 
-  static async updateEmployeeVan(db, employeeId, vanId) {
+  static async updateEmployeeVehicle(db, employeeId, vehicleId) {
     return new Promise((resolve, reject) => {
-      const query = `INSERT INTO public."Warehouse_User" (warehouse_id, user_id) VALUES ($1, $2)`;
-      db.query(query, [vanId, employeeId], (error, result) => {
+      const updateOldVehicleQuery = `UPDATE public."Vehicle" SET assigned_user_id = NULL WHERE assigned_user_id = $1`;
+      db.query(updateOldVehicleQuery, [employeeId], (error, result) => {
         if (error) {
           reject(error);
         } else {
-          resolve(result);
+          const query = `UPDATE public."Vehicle" SET assigned_user_id = $1 WHERE vehicle_id = $2`;
+          db.query(query, [employeeId, vehicleId], (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          });
         }
       });
     });

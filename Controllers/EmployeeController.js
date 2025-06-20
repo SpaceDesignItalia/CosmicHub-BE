@@ -106,11 +106,11 @@ class EmployeeController {
     }
   }
 
-  static async updateEmployeeVan(req, res, db) {
+  static async updateEmployeeVehicle(req, res, db) {
     try {
-      const van_id = req.body.van_id;
+      const vehicle_id = req.body.vehicle_id;
       const employee_id = req.body.employee_id;
-      await Employee.updateEmployeeVan(db, employee_id, van_id);
+      await Employee.updateEmployeeVehicle(db, employee_id, vehicle_id);
       res.status(200).json({
         message: "Veicolo dell'impiegato aggiornato con successo",
       });

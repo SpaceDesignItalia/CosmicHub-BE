@@ -91,7 +91,24 @@ class VehicleController {
         amount
       );
       res.status(200).json(vehicleInventory);
-    } catch (error) {}
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          error: "Errore nell'eliminazione dell'inventario del veicolo",
+        });
+    }
+  }
+
+  static async getAvailableVehicles(req, res, db) {
+    try {
+      const availableVehicles = await VehicleModel.getAvailableVehicles(db);
+      res.status(200).json(availableVehicles);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Errore nel recupero dei veicoli disponibili" });
+    }
   }
 }
 

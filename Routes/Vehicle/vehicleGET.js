@@ -20,6 +20,10 @@ const vehicleGET = (db) => {
     VehicleController.getVehicleInventory(req, res, db);
   });
 
+  router.get("/GetAvailableVehicles", authenticateMiddleware, (req, res) => {
+    VehicleController.getAvailableVehicles(req, res, db);
+  });
+
   return router;
 };
 
