@@ -132,7 +132,7 @@ class WarehouseController {
   // Disattiva un magazzino (soft delete)
   static async DeactivateWarehouse(req, res, db) {
     try {
-      const warehouseUUID = req.query.warehouse_uuid;
+      const warehouseUUID = req.body.warehouse_uuid;
 
       if (!warehouseUUID) {
         return res.status(400).json({ error: "UUID magazzino mancante" });
@@ -160,6 +160,40 @@ class WarehouseController {
       res
         .status(500)
         .json({ error: "Errore nella disattivazione del magazzino" });
+    }
+  }
+
+  // Riattiva un magazzino
+  static async ReactivateWarehouse(req, res, db) {
+    try {
+      const warehouseUUID = req.body.warehouse_uuid;
+
+      if (!warehouseUUID) {
+        return res.status(400).json({ error: "UUID magazzino mancante" });
+      }
+
+      // Verifica che il magazzino esista
+      const existingWarehouse = await Warehouse.GetWarehouseByUUID(
+        db,
+        warehouseUUID
+      );
+      if (!existingWarehouse) {
+        return res.status(404).json({ error: "Magazzino non trovato" });
+      }
+
+      const reactivatedWarehouse = await Warehouse.ReactivateWarehouseByUUID(
+        db,
+        warehouseUUID
+      );
+      res.status(200).json({
+        message: "Magazzino riattivato con successo",
+        data: reactivatedWarehouse,
+      });
+    } catch (error) {
+      console.error("Errore nella riattivazione del magazzino:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nella riattivazione del magazzino" });
     }
   }
 

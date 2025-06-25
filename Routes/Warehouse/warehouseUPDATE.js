@@ -14,6 +14,11 @@ const warehouseUPDATE = (db) => {
     WarehouseController.DeactivateWarehouse(req, res, db);
   });
 
+  // Riattiva un magazzino
+  router.put("/ReactivateWarehouse", authenticateMiddleware, (req, res) => {
+    WarehouseController.ReactivateWarehouse(req, res, db);
+  });
+
   return router;
 };
 

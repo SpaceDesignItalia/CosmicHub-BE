@@ -173,12 +173,50 @@ class WarehouseModel {
     });
   }
 
+  // Riattiva un magazzino (soft delete) per ID
+  static ReactivateWarehouse(db, warehouseId) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE public."Warehouse"
+        SET "IsActive" = true, "UpdatedAt" = $1
+        WHERE "WarehouseID" = $2
+        RETURNING *
+      `;
+      db.query(query, [new Date(), warehouseId], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
   // Disattiva un magazzino (soft delete) per UUID
   static DeactivateWarehouseByUUID(db, warehouseUUID) {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE public."Warehouse"
         SET "IsActive" = false, "UpdatedAt" = $1
+        WHERE "WarehouseUUID" = $2
+        RETURNING *
+      `;
+      db.query(query, [new Date(), warehouseUUID], (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      });
+    });
+  }
+
+  // Riattiva un magazzino (soft delete) per UUID
+  static ReactivateWarehouseByUUID(db, warehouseUUID) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE public."Warehouse"
+        SET "IsActive" = true, "UpdatedAt" = $1
         WHERE "WarehouseUUID" = $2
         RETURNING *
       `;
