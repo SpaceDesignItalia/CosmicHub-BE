@@ -17,6 +17,7 @@ const createRoleRoutes = require("./Routes/Role/Role");
 const createProductRoutes = require("./Routes/Product/Product");
 const createMovementRoutes = require("./Routes/Movement/Movement");
 const createVehicleRoutes = require("./Routes/Vehicle/Vehicle");
+const createDocumentRoutes = require("./Routes/Document/Document");
 
 const credentials = {
   key: fs.readFileSync("SSL/privateKey.key"),
@@ -81,6 +82,8 @@ app.use(PREFIX + "/Role", createRoleRoutes(db));
 app.use(PREFIX + "/Product", createProductRoutes(db));
 app.use(PREFIX + "/Movement", createMovementRoutes(db));
 app.use(PREFIX + "/Vehicle", createVehicleRoutes(db));
+app.use(PREFIX + "/Document", createDocumentRoutes(db));
+
 // Avvia il server HTTPS sulla porta 443
 (async () => {
   const chalk = (await import("chalk")).default;
