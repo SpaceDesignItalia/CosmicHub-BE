@@ -5,7 +5,7 @@ const DocumentController = require("../../Controllers/DocumentController");
 const authenticateMiddleware = require("../../middlewares/Authentication/Authmiddleware");
 
 const documentPOST = (db) => {
-  router.post("/CreateDDT", (req, res) => {
+  router.post("/CreateDDT", authenticateMiddleware, (req, res) => {
     DocumentController.createDDT(req, res, db);
   });
 

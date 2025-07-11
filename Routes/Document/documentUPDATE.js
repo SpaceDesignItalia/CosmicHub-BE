@@ -5,8 +5,8 @@ const DocumentController = require("../../Controllers/DocumentController");
 const authenticateMiddleware = require("../../middlewares/Authentication/Authmiddleware");
 
 const documentUPDATE = (db) => {
-  router.put("/UpdateDDT", authenticateMiddleware, (req, res) => {
-    DocumentController.updateDDT(req, res, db);
+  router.put("/UpdateDDTStatus", authenticateMiddleware, (req, res) => {
+    DocumentController.updateDDTStatus(req, res, db);
   });
 
   return router;

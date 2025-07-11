@@ -26,6 +26,21 @@ class DocumentController {
       res.status(500).json({ error: "Errore nella creazione del DDT" });
     }
   }
+
+  // Aggiorna lo stato di un DDT
+  static async updateDDTStatus(req, res, db) {
+    try {
+      const ddt_id = req.body.DDT_id;
+      const status = req.body.status;
+      const ddt = await Document.updateDDTStatus(db, ddt_id, status);
+      res.status(200).json(ddt);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento dello stato del DDT:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nell'aggiornamento dello stato del DDT" });
+    }
+  }
 }
 
 module.exports = DocumentController;

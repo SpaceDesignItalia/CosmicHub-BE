@@ -88,6 +88,18 @@ class DocumentModel {
       });
     });
   }
+
+  // Aggiorna lo stato di un DDT
+  static async updateDDTStatus(db, ddt_id, status) {
+    console.log(ddt_id, status);
+    return new Promise((resolve, reject) => {
+      const query = `UPDATE public."DDT_Document" SET status = $1 WHERE "DDT_id" = $2`;
+      db.query(query, [status, ddt_id], (err, result) => {
+        if (err) return reject(err);
+        resolve(result.rows[0]);
+      });
+    });
+  }
 }
 
 module.exports = DocumentModel;
