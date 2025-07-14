@@ -100,6 +100,88 @@ class DocumentModel {
       });
     });
   }
+
+  // Crea un documento veicolo
+  static async createVehicleDocument(db, company_id, parsedData, filePath) {
+    return new Promise((resolve, reject) => {
+      const query = `INSERT INTO public."Document" (type, company_id) VALUES (2, $1) RETURNING document_id`;
+      db.query(query, [company_id], (err, result) => {
+        if (err) return reject(err);
+        const document_id = result.rows[0].document_id;
+        const query2 = `INSERT INTO public."Vehicle_Document" (document_id, vehicle_id, title, note, type, emission_date, expiration_date, supplier, number, price, path) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`;
+        db.query(
+          query2,
+          [
+            document_id,
+            parsedData.entity_id,
+            parsedData.title,
+            parsedData.notes,
+            parsedData.document_type,
+            parsedData.issue_date,
+            parsedData.expiry_date,
+            parsedData.provider,
+            parsedData.certificate_number,
+            parsedData.cost,
+            filePath,
+          ],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result.rows[0]);
+          }
+        );
+      });
+    });
+  }
+
+  // Recupera tutti i documenti veicolo
+  static async getAllVehicleDocuments(db, company_id) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT 
+        d.document_id,
+        vd.title as document_name,
+        vd.type as document_type,
+        vd.path as file_path,
+        vd.emission_date as upload_date,
+        vd.expiration_date as expiry_date,
+        d.company_id,
+        vd.vehicle_id,
+        v.license_plate as vehicle_license_plate,
+        v.name as vehicle_name,
+        vd.price as cost,
+        vd.supplier as provider,
+        vd.number as certificate_number,
+        false as renewal_automatic,
+        vd.status as status,
+        vd.path as file_path,
+        vd.note as notes
+      FROM public."Vehicle_Document" vd
+      INNER JOIN public."Document" d ON vd.document_id = d.document_id
+      INNER JOIN public."Vehicle" v ON vd.vehicle_id = v.vehicle_id
+      WHERE d.company_id = $1`;
+      db.query(query, [company_id], (err, result) => {
+        if (err) return reject(err);
+        resolve(result.rows);
+      });
+    });
+  }
+
+  // Recupera un documento veicolo per ID
+  static async getVehicleDocumentPathById(db, document_id, company_id) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT 
+        vd.path as file_path,
+        vd.title as document_name,
+        vd.type as document_type
+      FROM public."Vehicle_Document" vd
+      INNER JOIN public."Document" d ON vd.document_id = d.document_id
+      WHERE d.document_id = $1 AND d.company_id = $2`;
+      db.query(query, [document_id, company_id], (err, result) => {
+        if (err) return reject(err);
+        resolve(result.rows[0]);
+      });
+    });
+  }
 }
 
 module.exports = DocumentModel;

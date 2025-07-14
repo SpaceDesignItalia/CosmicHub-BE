@@ -9,6 +9,18 @@ const documentGET = (db) => {
     DocumentController.getAllDDT(req, res, db);
   });
 
+  router.get("/GetAllVehicleDocuments", authenticateMiddleware, (req, res) => {
+    DocumentController.getAllVehicleDocuments(req, res, db);
+  });
+
+  router.get(
+    "/DownloadDocument/:document_id",
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.downloadDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 
