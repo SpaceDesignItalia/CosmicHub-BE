@@ -339,6 +339,242 @@ class DocumentModel {
       });
     });
   }
+
+  // Crea un documento azienda
+  static async createCompanyDocument(db, company_id, parsedData, filePath) {
+    return new Promise((resolve, reject) => {
+      const query = `INSERT INTO public."Document" (type, company_id) VALUES (3, $1) RETURNING document_id`;
+      db.query(query, [company_id], (err, result) => {
+        if (err) return reject(err);
+        const document_id = result.rows[0].document_id;
+        const query2 = `INSERT INTO public."Company_Document" (document_id, title, note, type, emission_date, expiration_date, supplier, number, path, warehouse_id, area) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`;
+        db.query(
+          query2,
+          [
+            document_id,
+            parsedData.title,
+            parsedData.notes,
+            parsedData.document_type,
+            parsedData.issue_date,
+            parsedData.expiry_date,
+            parsedData.authority,
+            parsedData.license_number,
+            filePath,
+            parsedData.entity_id,
+            parsedData.compliance_area,
+          ],
+          (err, result) => {
+            if (err) return reject(err);
+            resolve(result.rows[0]);
+          }
+        );
+      });
+    });
+  }
+
+  // Recupera tutti i documenti azienda
+  static async getAllCompanyDocuments(db, company_id) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT 
+        d.document_id,
+        cd.title as title,
+        cd.type as document_type,
+        cd.path as file_path,
+        cd.emission_date as issue_date,
+        cd.expiration_date as expiry_date,
+        d.company_id,
+        cd.warehouse_id as facility_id,
+        w."WarehouseName" as facility_name,
+        cd.supplier as authority,
+        cd.number as license_number,
+        false as renewal_required,
+        cd.area as compliance_area,
+        cd.status as status,
+        cd.note as notes
+      FROM public."Company_Document" cd
+      INNER JOIN public."Document" d ON cd.document_id = d.document_id
+      LEFT JOIN public."Warehouse" w ON cd.warehouse_id = w."WarehouseID"
+      WHERE d.company_id = $1`;
+      db.query(query, [company_id], (err, result) => {
+        if (err) return reject(err);
+        resolve(result.rows);
+      });
+    });
+  }
+
+  // Recupera un documento azienda per ID
+  static async getCompanyDocumentPathById(db, document_id, company_id) {
+    return new Promise((resolve, reject) => {
+      const query = `SELECT 
+        cd.path as file_path,
+        cd.title as document_name,
+        cd.type as document_type
+      FROM public."Company_Document" cd
+      INNER JOIN public."Document" d ON cd.document_id = d.document_id
+      WHERE d.document_id = $1 AND d.company_id = $2`;
+      db.query(query, [document_id, company_id], (err, result) => {
+        if (err) return reject(err);
+        resolve(result.rows[0]);
+      });
+    });
+  }
+
+  // Aggiorna un documento azienda
+  static async updateCompanyDocument(db, company_id, updateData, newFilePath) {
+    return new Promise((resolve, reject) => {
+      // Prima recupera il documento esistente per ottenere il path del file precedente
+      const getDocumentQuery = `SELECT cd.path as file_path, cd.document_id
+        FROM public."Company_Document" cd
+        INNER JOIN public."Document" d ON cd.document_id = d.document_id
+        WHERE d.document_id = $1 AND d.company_id = $2`;
+
+      db.query(
+        getDocumentQuery,
+        [updateData.document_id, company_id],
+        (err, result) => {
+          if (err) return reject(err);
+
+          if (result.rows.length === 0) {
+            return reject(new Error("Documento non trovato"));
+          }
+
+          const existingDocument = result.rows[0];
+          const oldFilePath = existingDocument.file_path;
+
+          // Elimina il file precedente se esiste e se c'è un nuovo file o se il file è stato rimosso
+          if (oldFilePath && (newFilePath || updateData.fileChanged)) {
+            const fs = require("fs");
+            const path = require("path");
+            const documentsDir = path.join(__dirname, "../documents");
+            const fullOldPath = path.join(documentsDir, oldFilePath);
+
+            if (fs.existsSync(fullOldPath)) {
+              try {
+                fs.unlinkSync(fullOldPath);
+                console.log("File precedente eliminato:", fullOldPath);
+              } catch (unlinkError) {
+                console.error(
+                  "Errore nell'eliminazione del file precedente:",
+                  unlinkError
+                );
+                // Non bloccare l'aggiornamento se l'eliminazione del file fallisce
+              }
+            }
+          }
+
+          // Determina il path finale del file
+          const finalFilePath =
+            newFilePath || (updateData.fileChanged ? null : oldFilePath);
+
+          // Aggiorna il documento nel database
+          const updateQuery = `UPDATE public."Company_Document" 
+          SET warehouse_id = $1, title = $2, note = $3, type = $4, emission_date = $5, 
+              expiration_date = $6, supplier = $7, number = $8, path = $9, area = $10
+          WHERE document_id = $11 AND document_id IN (
+            SELECT d.document_id FROM public."Document" d WHERE d.company_id = $12
+          ) RETURNING *`;
+
+          db.query(
+            updateQuery,
+            [
+              updateData.entity_id,
+              updateData.title,
+              updateData.notes,
+              updateData.document_type,
+              updateData.issue_date,
+              updateData.expiry_date,
+              updateData.authority,
+              updateData.license_number,
+              finalFilePath,
+              updateData.compliance_area,
+              updateData.document_id,
+              company_id,
+            ],
+            (err, result) => {
+              if (err) return reject(err);
+
+              if (result.rows.length === 0) {
+                return reject(new Error("Documento non aggiornato"));
+              }
+
+              resolve(result.rows[0]);
+            }
+          );
+        }
+      );
+    });
+  }
+
+  // Elimina un documento azienda
+  static async deleteCompanyDocument(db, document_id, company_id) {
+    return new Promise((resolve, reject) => {
+      // Prima recupera il documento per ottenere il path del file
+      const getDocumentQuery = `SELECT cd.path as file_path, cd.document_id
+        FROM public."Company_Document" cd
+        INNER JOIN public."Document" d ON cd.document_id = d.document_id
+        WHERE d.document_id = $1 AND d.company_id = $2`;
+
+      db.query(getDocumentQuery, [document_id, company_id], (err, result) => {
+        if (err) return reject(err);
+
+        if (result.rows.length === 0) {
+          return reject(new Error("Documento non trovato"));
+        }
+
+        const document = result.rows[0];
+        const filePath = document.file_path;
+
+        // Elimina il file dal filesystem se esiste
+        if (filePath) {
+          const fs = require("fs");
+          const path = require("path");
+          const documentsDir = path.join(__dirname, "../documents");
+          const fullPath = path.join(documentsDir, filePath);
+
+          if (fs.existsSync(fullPath)) {
+            try {
+              fs.unlinkSync(fullPath);
+              console.log("File eliminato:", fullPath);
+            } catch (unlinkError) {
+              console.error("Errore nell'eliminazione del file:", unlinkError);
+              // Non bloccare l'eliminazione se la rimozione del file fallisce
+            }
+          }
+        }
+
+        // Elimina il record dal database
+        const deleteQuery = `DELETE FROM public."Company_Document" 
+          WHERE document_id = $1 AND document_id IN (
+            SELECT d.document_id FROM public."Document" d WHERE d.company_id = $2
+          ) RETURNING *`;
+
+        db.query(deleteQuery, [document_id, company_id], (err, result) => {
+          if (err) return reject(err);
+
+          if (result.rows.length === 0) {
+            return reject(new Error("Documento non eliminato"));
+          }
+
+          // Elimina anche il record dalla tabella Document
+          const deleteDocumentQuery = `DELETE FROM public."Document" 
+            WHERE document_id = $1 AND company_id = $2 RETURNING *`;
+
+          db.query(
+            deleteDocumentQuery,
+            [document_id, company_id],
+            (err, docResult) => {
+              if (err) return reject(err);
+
+              resolve({
+                message: "Documento eliminato con successo",
+                deletedDocument: result.rows[0],
+              });
+            }
+          );
+        });
+      });
+    });
+  }
 }
 
 module.exports = DocumentModel;

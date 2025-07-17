@@ -21,6 +21,18 @@ const documentGET = (db) => {
     }
   );
 
+  router.get("/GetAllCompanyDocuments", authenticateMiddleware, (req, res) => {
+    DocumentController.getAllCompanyDocuments(req, res, db);
+  });
+
+  router.get(
+    "/DownloadCompanyDocument/:document_id",
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.downloadCompanyDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 

@@ -42,6 +42,10 @@ const documentPOST = (db) => {
     DocumentController.createVehicleDocument(req, res, db);
   });
 
+  router.post("/CreateCompanyDocument", upload.single("file"), (req, res) => {
+    DocumentController.createCompanyDocument(req, res, db);
+  });
+
   return router;
 };
 
