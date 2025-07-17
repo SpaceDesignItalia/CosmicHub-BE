@@ -9,6 +9,14 @@ const documentDELETE = (db) => {
     DocumentController.deleteDDT(req, res, db);
   });
 
+  router.delete(
+    "/DeleteVehicleDocument/:document_id",
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.deleteVehicleDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 

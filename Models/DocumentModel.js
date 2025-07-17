@@ -139,10 +139,10 @@ class DocumentModel {
     return new Promise((resolve, reject) => {
       const query = `SELECT 
         d.document_id,
-        vd.title as document_name,
+        vd.title as title,
         vd.type as document_type,
         vd.path as file_path,
-        vd.emission_date as upload_date,
+        vd.emission_date as issue_date,
         vd.expiration_date as expiry_date,
         d.company_id,
         vd.vehicle_id,
@@ -179,6 +179,163 @@ class DocumentModel {
       db.query(query, [document_id, company_id], (err, result) => {
         if (err) return reject(err);
         resolve(result.rows[0]);
+      });
+    });
+  }
+
+  // Aggiorna un documento veicolo
+  static async updateVehicleDocument(db, company_id, updateData, newFilePath) {
+    return new Promise((resolve, reject) => {
+      // Prima recupera il documento esistente per ottenere il path del file precedente
+      const getDocumentQuery = `SELECT vd.path as file_path, vd.document_id
+        FROM public."Vehicle_Document" vd
+        INNER JOIN public."Document" d ON vd.document_id = d.document_id
+        WHERE d.document_id = $1 AND d.company_id = $2`;
+
+      db.query(
+        getDocumentQuery,
+        [updateData.document_id, company_id],
+        (err, result) => {
+          if (err) return reject(err);
+
+          if (result.rows.length === 0) {
+            return reject(new Error("Documento non trovato"));
+          }
+
+          const existingDocument = result.rows[0];
+          const oldFilePath = existingDocument.file_path;
+
+          // Elimina il file precedente se esiste e se c'è un nuovo file o se il file è stato rimosso
+          if (oldFilePath && (newFilePath || updateData.fileChanged)) {
+            const fs = require("fs");
+            const path = require("path");
+            const documentsDir = path.join(__dirname, "../documents");
+            const fullOldPath = path.join(documentsDir, oldFilePath);
+
+            if (fs.existsSync(fullOldPath)) {
+              try {
+                fs.unlinkSync(fullOldPath);
+                console.log("File precedente eliminato:", fullOldPath);
+              } catch (unlinkError) {
+                console.error(
+                  "Errore nell'eliminazione del file precedente:",
+                  unlinkError
+                );
+                // Non bloccare l'aggiornamento se l'eliminazione del file fallisce
+              }
+            }
+          }
+
+          // Determina il path finale del file
+          const finalFilePath =
+            newFilePath || (updateData.fileChanged ? null : oldFilePath);
+
+          // Aggiorna il documento nel database
+          const updateQuery = `UPDATE public."Vehicle_Document" 
+          SET vehicle_id = $1, title = $2, note = $3, type = $4, emission_date = $5, 
+              expiration_date = $6, supplier = $7, number = $8, price = $9, path = $10
+          WHERE document_id = $11 AND document_id IN (
+            SELECT d.document_id FROM public."Document" d WHERE d.company_id = $12
+          ) RETURNING *`;
+
+          db.query(
+            updateQuery,
+            [
+              updateData.vehicle_id,
+              updateData.title,
+              updateData.notes,
+              updateData.document_type,
+              updateData.issue_date,
+              updateData.expiry_date,
+              updateData.provider,
+              updateData.certificate_number,
+              updateData.cost,
+              finalFilePath,
+              updateData.document_id,
+              company_id,
+            ],
+            (err, result) => {
+              if (err) return reject(err);
+
+              if (result.rows.length === 0) {
+                return reject(new Error("Documento non aggiornato"));
+              }
+
+              resolve(result.rows[0]);
+            }
+          );
+        }
+      );
+    });
+  }
+
+  // Elimina un documento veicolo
+  static async deleteVehicleDocument(db, document_id, company_id) {
+    return new Promise((resolve, reject) => {
+      // Prima recupera il documento per ottenere il path del file
+      const getDocumentQuery = `SELECT vd.path as file_path, vd.document_id
+        FROM public."Vehicle_Document" vd
+        INNER JOIN public."Document" d ON vd.document_id = d.document_id
+        WHERE d.document_id = $1 AND d.company_id = $2`;
+
+      db.query(getDocumentQuery, [document_id, company_id], (err, result) => {
+        if (err) return reject(err);
+
+        if (result.rows.length === 0) {
+          return reject(new Error("Documento non trovato"));
+        }
+
+        const document = result.rows[0];
+        const filePath = document.file_path;
+
+        // Elimina il file dal filesystem se esiste
+        if (filePath) {
+          const fs = require("fs");
+          const path = require("path");
+          const documentsDir = path.join(__dirname, "../documents");
+          const fullPath = path.join(documentsDir, filePath);
+
+          if (fs.existsSync(fullPath)) {
+            try {
+              fs.unlinkSync(fullPath);
+              console.log("File eliminato:", fullPath);
+            } catch (unlinkError) {
+              console.error("Errore nell'eliminazione del file:", unlinkError);
+              // Non bloccare l'eliminazione se la rimozione del file fallisce
+            }
+          }
+        }
+
+        // Elimina il record dal database
+        const deleteQuery = `DELETE FROM public."Vehicle_Document" 
+          WHERE document_id = $1 AND document_id IN (
+            SELECT d.document_id FROM public."Document" d WHERE d.company_id = $2
+          ) RETURNING *`;
+
+        db.query(deleteQuery, [document_id, company_id], (err, result) => {
+          if (err) return reject(err);
+
+          if (result.rows.length === 0) {
+            return reject(new Error("Documento non eliminato"));
+          }
+
+          // Elimina anche il record dalla tabella Document
+          const deleteDocumentQuery = `DELETE FROM public."Document" 
+            WHERE document_id = $1 AND company_id = $2 RETURNING *`;
+
+          db.query(
+            deleteDocumentQuery,
+            [document_id, company_id],
+            (err, docResult) => {
+              if (err) return reject(err);
+
+              resolve({
+                message: "Documento eliminato con successo",
+                deletedDocument: result.rows[0],
+              });
+            }
+          );
+        });
       });
     });
   }

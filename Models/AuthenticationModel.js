@@ -50,7 +50,6 @@ class AuthenticationModel {
               LoginData.password,
               result.rows[0].password
             );
-            console.log(result.rows[0]);
             let userData = result.rows[0];
             if (isPasswordValid) {
               const roleQuery = `SELECT * FROM public."Role_User" WHERE "user_id" = $1`;

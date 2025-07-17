@@ -117,7 +117,6 @@ class DocumentController {
 
       console.log(document_id, company_id);
 
-      // Recupera le informazioni del documento
       const document = await Document.getVehicleDocumentPathById(
         db,
         document_id,
@@ -128,18 +127,15 @@ class DocumentController {
         return res.status(404).json({ error: "Documento non trovato" });
       }
 
-      // Costruisci il path completo del file
       const path = require("path");
       const documentsDir = path.join(__dirname, "../documents");
       const filePath = path.join(documentsDir, document.file_path);
 
-      // Verifica che il file esista
       const fs = require("fs");
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: "File non trovato" });
       }
 
-      // Determina il tipo MIME basato sull'estensione
       const ext = path.extname(filePath).toLowerCase();
       let mimeType = "application/octet-stream";
 
@@ -170,19 +166,92 @@ class DocumentController {
           break;
       }
 
-      // Imposta gli header per il download
       res.setHeader("Content-Type", mimeType);
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="${document.document_name || document.file_path}"`
       );
 
-      // Invia il file
-      console.log(filePath);
       res.sendFile(filePath);
     } catch (error) {
       console.error("Errore nel download del documento:", error);
       res.status(500).json({ error: "Errore nel download del documento" });
+    }
+  }
+
+  // Aggiorna un documento veicolo
+  static async updateVehicleDocument(req, res, db) {
+    try {
+      const company_id = req.session.account.company_id;
+      const uploadedFile = req.file;
+
+      console.log(
+        "File caricato:",
+        uploadedFile
+          ? {
+              originalname: uploadedFile.originalname,
+              mimetype: uploadedFile.mimetype,
+              size: uploadedFile.size,
+              path: uploadedFile.path,
+            }
+          : "Nessun file"
+      );
+
+      let updateData = {};
+
+      // Se c'è un file, i dati sono in req.body.data come JSON string
+      if (uploadedFile) {
+        if (req.body.data) {
+          try {
+            updateData = JSON.parse(req.body.data);
+            console.log("Dati parsati:", updateData);
+          } catch (parseError) {
+            console.error("Errore nel parsing dei dati JSON:", parseError);
+            return res.status(400).json({ error: "Dati JSON non validi" });
+          }
+        }
+      } else {
+        // Se non c'è file, i dati sono direttamente in req.body
+        updateData = req.body;
+      }
+
+      // Estrai il path relativo del file salvato se presente
+      const newFilePath = uploadedFile ? uploadedFile.filename : null;
+      console.log("Nuovo path del file:", newFilePath);
+
+      const document = await Document.updateVehicleDocument(
+        db,
+        company_id,
+        updateData,
+        newFilePath
+      );
+
+      res.status(200).json(document);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento del documento veicolo:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nell'aggiornamento del documento veicolo" });
+    }
+  }
+
+  // Elimina un documento veicolo
+  static async deleteVehicleDocument(req, res, db) {
+    try {
+      const document_id = req.params.document_id;
+      const company_id = req.session.account.company_id;
+
+      const result = await Document.deleteVehicleDocument(
+        db,
+        document_id,
+        company_id
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Errore nell'eliminazione del documento veicolo:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nell'eliminazione del documento veicolo" });
     }
   }
 }
