@@ -25,6 +25,14 @@ const documentDELETE = (db) => {
     }
   );
 
+  router.delete(
+    "/DeleteEmployeeDocument/:document_id",
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.deleteEmployeeDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 

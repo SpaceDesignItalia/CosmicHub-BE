@@ -56,6 +56,15 @@ const documentUPDATE = (db) => {
     }
   );
 
+  router.put(
+    "/UpdateEmployeeDocument",
+    upload.single("file"),
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.updateEmployeeDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 

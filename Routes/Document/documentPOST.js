@@ -46,6 +46,9 @@ const documentPOST = (db) => {
     DocumentController.createCompanyDocument(req, res, db);
   });
 
+  router.post("/CreateEmployeeDocument", upload.single("file"), (req, res) => {
+    DocumentController.createEmployeeDocument(req, res, db);
+  });
   return router;
 };
 

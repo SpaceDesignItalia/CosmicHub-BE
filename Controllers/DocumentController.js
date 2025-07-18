@@ -469,6 +469,227 @@ class DocumentController {
         .json({ error: "Errore nell'eliminazione del documento azienda" });
     }
   }
+
+  // Crea un documento dipendente
+  static async createEmployeeDocument(req, res, db) {
+    try {
+      const company_id = req.session.account.company_id;
+
+      const formData = req.body;
+      const uploadedFile = req.file;
+
+      console.log("Dati del form:", formData);
+      console.log(
+        "File caricato:",
+        uploadedFile
+          ? {
+              originalname: uploadedFile.originalname,
+              mimetype: uploadedFile.mimetype,
+              size: uploadedFile.size,
+              path: uploadedFile.path,
+            }
+          : "Nessun file"
+      );
+
+      let parsedData = {};
+      if (formData.data) {
+        try {
+          parsedData = JSON.parse(formData.data);
+          console.log("Dati parsati:", parsedData);
+        } catch (parseError) {
+          console.error("Errore nel parsing dei dati JSON:", parseError);
+        }
+      }
+
+      // Estrai il path relativo del file salvato
+      const filePath = uploadedFile ? uploadedFile.filename : null;
+      console.log("Path relativo del file salvato:", filePath);
+
+      const document = await Document.createEmployeeDocument(
+        db,
+        company_id,
+        parsedData,
+        filePath
+      );
+      res.status(200).json(document);
+    } catch (error) {
+      console.error("Errore nella creazione del documento dipendente:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nella creazione del documento dipendente" });
+    }
+  }
+
+  // Recupera tutti i documenti dipendenti
+  static async getAllEmployeeDocuments(req, res, db) {
+    try {
+      const company_id = req.session.account.company_id;
+      const employee_documents = await Document.getAllEmployeeDocuments(
+        db,
+        company_id
+      );
+      res.status(200).json(employee_documents);
+    } catch (error) {
+      console.error("Errore nel recupero dei documenti dipendenti:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nel recupero dei documenti dipendenti" });
+    }
+  }
+
+  // Download di un documento dipendente
+  static async downloadEmployeeDocument(req, res, db) {
+    try {
+      const document_id = req.params.document_id;
+      const company_id = req.session.account.company_id;
+
+      console.log(document_id, company_id);
+
+      const document = await Document.getEmployeeDocumentPathById(
+        db,
+        document_id,
+        company_id
+      );
+
+      if (!document) {
+        return res.status(404).json({ error: "Documento non trovato" });
+      }
+
+      const path = require("path");
+      const documentsDir = path.join(__dirname, "../documents");
+      const filePath = path.join(documentsDir, document.file_path);
+
+      const fs = require("fs");
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "File non trovato" });
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      let mimeType = "application/octet-stream";
+
+      switch (ext) {
+        case ".pdf":
+          mimeType = "application/pdf";
+          break;
+        case ".jpg":
+        case ".jpeg":
+          mimeType = "image/jpeg";
+          break;
+        case ".png":
+          mimeType = "image/png";
+          break;
+        case ".doc":
+          mimeType = "application/msword";
+          break;
+        case ".docx":
+          mimeType =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          break;
+        case ".xls":
+          mimeType = "application/vnd.ms-excel";
+          break;
+        case ".xlsx":
+          mimeType =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+          break;
+      }
+
+      res.setHeader("Content-Type", mimeType);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${document.document_name || document.file_path}"`
+      );
+
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("Errore nel download del documento dipendente:", error);
+      res
+        .status(500)
+        .json({ error: "Errore nel download del documento dipendente" });
+    }
+  }
+
+  // Aggiorna un documento dipendente
+  static async updateEmployeeDocument(req, res, db) {
+    try {
+      const company_id = req.session.account.company_id;
+      const uploadedFile = req.file;
+
+      console.log(
+        "File caricato:",
+        uploadedFile
+          ? {
+              originalname: uploadedFile.originalname,
+              mimetype: uploadedFile.mimetype,
+              size: uploadedFile.size,
+              path: uploadedFile.path,
+            }
+          : "Nessun file"
+      );
+
+      let updateData = {};
+
+      // Se c'è un file, i dati sono in req.body.data come JSON string
+      if (uploadedFile) {
+        if (req.body.data) {
+          try {
+            updateData = JSON.parse(req.body.data);
+            console.log("Dati parsati:", updateData);
+          } catch (parseError) {
+            console.error("Errore nel parsing dei dati JSON:", parseError);
+            return res.status(400).json({ error: "Dati JSON non validi" });
+          }
+        }
+      } else {
+        // Se non c'è file, i dati sono direttamente in req.body
+        updateData = req.body;
+      }
+
+      // Estrai il path relativo del file salvato se presente
+      const newFilePath = uploadedFile ? uploadedFile.filename : null;
+      console.log("Nuovo path del file:", newFilePath);
+
+      const document = await Document.updateEmployeeDocument(
+        db,
+        company_id,
+        updateData,
+        newFilePath
+      );
+
+      res.status(200).json(document);
+    } catch (error) {
+      console.error(
+        "Errore nell'aggiornamento del documento dipendente:",
+        error
+      );
+      res
+        .status(500)
+        .json({ error: "Errore nell'aggiornamento del documento dipendente" });
+    }
+  }
+
+  // Elimina un documento dipendente
+  static async deleteEmployeeDocument(req, res, db) {
+    try {
+      const document_id = req.params.document_id;
+      const company_id = req.session.account.company_id;
+
+      const result = await Document.deleteEmployeeDocument(
+        db,
+        document_id,
+        company_id
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      console.error(
+        "Errore nell'eliminazione del documento dipendente:",
+        error
+      );
+      res
+        .status(500)
+        .json({ error: "Errore nell'eliminazione del documento dipendente" });
+    }
+  }
 }
 
 module.exports = DocumentController;

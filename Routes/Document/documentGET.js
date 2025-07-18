@@ -33,6 +33,18 @@ const documentGET = (db) => {
     }
   );
 
+  router.get("/GetAllEmployeeDocuments", authenticateMiddleware, (req, res) => {
+    DocumentController.getAllEmployeeDocuments(req, res, db);
+  });
+
+  router.get(
+    "/DownloadEmployeeDocument/:document_id",
+    authenticateMiddleware,
+    (req, res) => {
+      DocumentController.downloadEmployeeDocument(req, res, db);
+    }
+  );
+
   return router;
 };
 
