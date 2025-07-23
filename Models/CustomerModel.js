@@ -6,7 +6,7 @@ class CustomerModel {
         if (error) {
           reject(error);
         } else {
-          resolve(result.rows[0]);
+          resolve(result.rows);
         }
       });
     });
