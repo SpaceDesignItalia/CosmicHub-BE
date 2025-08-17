@@ -23,6 +23,17 @@ class CustomerController {
       res.status(500).json({ error: "Errore nella creazione del cliente" });
     }
   }
+
+  static async AddEvent(req, res, db) {
+    try {
+      const company_id = 1;
+      const event = await Customer.AddEvent(db, company_id, req.body);
+      res.status(200).json(event);
+    } catch (error) {
+      console.error("Errore nell'aggiunta dell'evento:", error);
+      res.status(500).json({ error: "Errore nell'aggiunta dell'evento" });
+    }
+  }
 }
 
 module.exports = CustomerController;

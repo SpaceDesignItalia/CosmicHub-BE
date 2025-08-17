@@ -10,6 +10,10 @@ const customerPOST = (db) => {
     CustomerController.CreateCustomer(req, res, db);
   });
 
+  router.post("/AddEvent", (req, res) => {
+    CustomerController.AddEvent(req, res, db);
+  });
+
   return router; // Ritorna il router per consentire l'utilizzo da parte dell'app principale
 };
 
