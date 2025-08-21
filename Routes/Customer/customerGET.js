@@ -11,6 +11,10 @@ const customerGET = (db) => {
     CustomerController.GetAllCustomers(req, res, db);
   });
 
+  router.get("/GetAllEvents", authenticateMiddleware, (req, res) => {
+    CustomerController.GetAllEvents(req, res, db);
+  });
+
   return router; // Ritorna il router per consentire l'utilizzo da parte dell'app principale
 };
 
