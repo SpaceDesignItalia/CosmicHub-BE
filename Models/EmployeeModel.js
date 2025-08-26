@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 class EmployeeModel {
   static getAllEmployees(db) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT "User"."user_id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "Role"."name" as "role", "vehicle_id", "Vehicle"."name" as "vehicle_name", "Vehicle"."license_plate" FROM public."User" 
+      const query = `SELECT "User"."user_id", "User"."name", "User"."surname", "User"."email", "Role"."name" as "role", "vehicle_id", "Vehicle"."name" as "vehicle_name", "Vehicle"."license_plate" FROM public."User" 
       INNER JOIN public."Role_User" USING (user_id)
       INNER JOIN public."Role" USING (role_id)
       LEFT JOIN public."Vehicle" ON "Vehicle"."assigned_user_id" = "User"."user_id"`;
@@ -184,7 +184,7 @@ class EmployeeModel {
 
   static async getEmployeesWithoutVehicle(db) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" 
+      const query = `SELECT "User"."user_id" AS "id", "User"."name", "User"."surname", "User"."email" FROM public."User" 
       WHERE user_id NOT IN (SELECT assigned_user_id as user_id FROM public."Vehicle" WHERE assigned_user_id IS NOT NULL)`;
       db.query(query, (error, result) => {
         if (error) {
@@ -198,7 +198,7 @@ class EmployeeModel {
 
   static async getUserByVehicleId(db, vehicle_id) {
     return new Promise((resolve, reject) => {
-      const query = `SELECT "User"."user_id" AS "id", CONCAT("User"."name", ' ', "User"."surname") AS "name", "User"."email" FROM public."User" 
+      const query = `SELECT "User"."user_id" AS "id", "User"."name", "User"."surname", "User"."email" FROM public."User" 
       WHERE "Vehicle"."vehicle_id" = $1`;
       db.query(query, [vehicle_id], (error, result) => {
         if (error) {
