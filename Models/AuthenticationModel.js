@@ -57,9 +57,13 @@ class AuthenticationModel {
                 if (error) {
                   reject(error);
                 } else {
-                  const role = result.rows[0].role_id;
-                  userData.role = role;
-                  resolve(userData);
+                  if (result.rows.length > 0) {
+                    const role = result.rows[0].role_id;
+                    userData.role = role;
+                    resolve(userData);
+                  } else {
+                    reject(new Error("Nessun ruolo assegnato all'utente"));
+                  }
                 }
               });
             } else {

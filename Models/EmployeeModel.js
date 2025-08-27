@@ -72,35 +72,41 @@ class EmployeeModel {
     });
   }
 
-  static updateEmployeeData(db, data, email) {
+  static updateEmployeeData(db, data) {
     return new Promise((resolve, reject) => {
       const query = `
         UPDATE public."User"
         SET name = $1, surname = $2, email = $3
-        WHERE email = $4
+        WHERE user_id = $4
         RETURNING user_id
       `;
       db.query(
         query,
-        [data.name, data.surname, data.email, email],
+        [data.name, data.surname, data.email, data.user_id],
         (error, result) => {
           if (error) {
             reject(error);
           } else {
             const user_id = result.rows[0].user_id;
-            console.log(user_id);
-            const roleQuery = `
-              UPDATE public."Role_User"
-              SET role_id = $1
-              WHERE user_id = $2
-            `;
-            db.query(roleQuery, [data.role, user_id], (error, result) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(result);
-              }
-            });
+
+            // Aggiorna il ruolo solo se è specificato
+            if (data.role && data.role !== null && data.role !== undefined) {
+              const roleQuery = `
+                UPDATE public."Role_User"
+                SET role_id = $1
+                WHERE user_id = $2
+              `;
+              db.query(roleQuery, [data.role, user_id], (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              });
+            } else {
+              // Se non c'è ruolo da aggiornare, risolvi immediatamente
+              resolve(result);
+            }
           }
         }
       );
