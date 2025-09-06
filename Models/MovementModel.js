@@ -109,39 +109,41 @@ class MovementModel {
   // Crea un nuovo movimento
   static async createMovement(db, data, company_id, created_by) {
     return new Promise((resolve, reject) => {
+      // Verifico che product_id sia presente
+      if (!data.product_id) {
+        return reject(new Error("product_id è richiesto"));
+      }
+
       // Prima verifichiamo che il prodotto appartenga alla company
       const productQuery = `SELECT product_id FROM public."Product" WHERE product_id = $1`;
 
-      db.query(
-        productQuery,
-        [data.selectedProduct.product_id],
-        (err, productResult) => {
-          if (err) {
-            console.error("Errore nella verifica del prodotto:", err);
-            return reject(err);
-          }
+      db.query(productQuery, [data.product_id], (err, productResult) => {
+        if (err) {
+          console.error("Errore nella verifica del prodotto:", err);
+          return reject(err);
+        }
 
-          if (!productResult.rows || productResult.rows.length === 0) {
-            return reject(new Error("Prodotto non trovato o non autorizzato"));
-          }
+        if (!productResult.rows || productResult.rows.length === 0) {
+          return reject(new Error("Prodotto non trovato o non autorizzato"));
+        }
 
-          // Gestione corretta del campo from_supplier (deve essere bigint o null)
-          let fromSupplier = null;
-          if (data.from_supplier !== null) {
-            const supplierNum = parseInt(data.from_supplier);
-            if (!isNaN(supplierNum) && supplierNum > 0) {
-              fromSupplier = supplierNum;
-            }
+        // Gestione corretta del campo from_supplier (deve essere bigint o null)
+        let fromSupplier = null;
+        if (data.from_supplier !== null) {
+          const supplierNum = parseInt(data.from_supplier);
+          if (!isNaN(supplierNum) && supplierNum > 0) {
+            fromSupplier = supplierNum;
           }
+        }
 
-          if (data.type === "increase") {
-            data.movement_type_id = 4;
-          } else if (data.type === "decrease") {
-            data.movement_type_id = 5;
-          }
+        if (data.type === "increase") {
+          data.movement_type_id = 4;
+        } else if (data.type === "decrease") {
+          data.movement_type_id = 5;
+        }
 
-          // Procediamo con l'inserimento del movimento
-          const insertQuery = `
+        // Procediamo con l'inserimento del movimento
+        const insertQuery = `
           INSERT INTO public."ProductMovement" 
           (product_id, from_warehouse_id, from_vehicle_id, to_warehouse_id, to_vehicle_id, 
            amount, movement_type_id, movement_date, from_supplier, created_by)
@@ -149,49 +151,48 @@ class MovementModel {
           RETURNING movement_id
         `;
 
-          const values = [
-            data.selectedProduct.product_id,
-            data.from_warehouse_id || null,
-            data.from_vehicle_id || null,
-            data.to_warehouse_id || null,
-            data.to_vehicle_id || null,
-            data.amount,
-            data.movement_type_id,
-            data.movement_date || new Date(),
-            fromSupplier,
-            created_by,
-          ];
+        const values = [
+          data.product_id,
+          data.from_warehouse_id || null,
+          data.from_vehicle_id || null,
+          data.to_warehouse_id || null,
+          data.to_vehicle_id || null,
+          data.amount,
+          data.movement_type_id,
+          data.movement_date || new Date(),
+          fromSupplier,
+          created_by,
+        ];
 
-          db.query(insertQuery, values, (err, result) => {
-            if (err) {
-              console.error("Errore nell'inserimento del movimento:", err);
-              reject(err);
-            }
+        db.query(insertQuery, values, (err, result) => {
+          if (err) {
+            console.error("Errore nell'inserimento del movimento:", err);
+            reject(err);
+          }
 
-            if (!result.rows || result.rows.length === 0) {
-              reject(
-                new Error(
-                  "Errore nell'inserimento del movimento: nessun ID restituito"
-                )
-              );
-            }
+          if (!result.rows || result.rows.length === 0) {
+            reject(
+              new Error(
+                "Errore nell'inserimento del movimento: nessun ID restituito"
+              )
+            );
+          }
 
-            const movement_id = result.rows[0].movement_id;
+          const movement_id = result.rows[0].movement_id;
 
-            // Aggiorniamo lo stock del prodotto in base al tipo di movimento
-            this.updateProductStock(db, data, movement_id)
-              .then(() => {
-                resolve({
-                  movement_id: movement_id,
-                  message: "Movimento creato con successo",
-                });
-              })
-              .catch((error) => {
-                reject(error);
+          // Aggiorniamo lo stock del prodotto in base al tipo di movimento
+          this.updateProductStock(db, data, movement_id)
+            .then(() => {
+              resolve({
+                movement_id: movement_id,
+                message: "Movimento creato con successo",
               });
-          });
-        }
-      );
+            })
+            .catch((error) => {
+              reject(error);
+            });
+        });
+      });
     });
   }
 
@@ -341,16 +342,15 @@ class MovementModel {
               // Creiamo il prodotto nel magazzino di destinazione
               const createProductQuery = `
                 INSERT INTO public."Product" 
-                (name, company_id, category_id, sku, description, price, min_stock_treshold, 
+                (name, category_id, sku, description, price, min_stock_treshold, 
                  barcode, qr_code, supplier_id, brand_id, weight, dimensions, location, notes, 
                  cost_price, vat_rate, reorder_quantity, stock_unit, warehouse_id, created_by) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                 RETURNING product_id
               `;
 
               const values = [
                 originalProduct.name,
-                originalProduct.company_id,
                 originalProduct.category_id,
                 originalProduct.sku + "_W" + data.to_warehouse_id, // SKU unico per magazzino
                 originalProduct.description,

@@ -14,6 +14,9 @@ const productUPDATE = (db) => {
     ProductController.updateProduct(req, res, db);
   });
 
+  router.put("/UpdateCategory/:id", authenticateMiddleware, (req, res) => {
+    ProductController.updateCategory(req, res, db);
+  });
   return router;
 };
 

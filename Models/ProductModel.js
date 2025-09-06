@@ -440,6 +440,173 @@ class ProductModel {
     });
   }
 
+  static async getCategoryById(db, category_id, company_id) {
+    return new Promise((resolve, reject) => {
+      const categoryQuery = `SELECT * FROM public."Category" WHERE category_id = $1 AND company_id = $2`;
+      db.query(categoryQuery, [category_id, company_id], (err, result) => {
+        if (err) {
+          console.error("Errore nella query getCategoryById:", err);
+          reject(err);
+        }
+
+        if (!result.rows || result.rows.length === 0) {
+          reject(new Error("Categoria non trovata o non autorizzata"));
+        }
+
+        const category = result.rows[0];
+
+        // Recupero gli attributi della categoria
+        const attributesQuery = `SELECT "Category_Attribute"."name", "Category_Attribute"."type", "Category_Attribute"."isRequired", "Category_Attribute"."attribute_id" 
+          FROM public."Category_Attribute"
+          WHERE "Category_Attribute"."category_id" = $1`;
+
+        db.query(attributesQuery, [category_id], (err, attributesResult) => {
+          if (err) {
+            console.error("Errore nella query attributi categoria:", err);
+            reject(err);
+          }
+
+          category.attributes = attributesResult.rows;
+          resolve(category);
+        });
+      });
+    });
+  }
+
+  static async updateCategory(db, category_id, data, company_id, updated_by) {
+    return new Promise((resolve, reject) => {
+      // Prima verifico che la categoria esista e appartenga alla company
+      const checkQuery = `SELECT category_id FROM public."Category" WHERE category_id = $1 AND company_id = $2`;
+      db.query(checkQuery, [category_id, company_id], (err, result) => {
+        if (err) {
+          console.error("Errore nella verifica della categoria:", err);
+          reject(err);
+        }
+
+        if (!result.rows || result.rows.length === 0) {
+          reject(
+            new Error(
+              "Categoria non trovata o non autorizzata all'aggiornamento"
+            )
+          );
+        }
+
+        // Aggiorno i dati della categoria
+        const updateFields = [];
+        const updateValues = [];
+        let paramIndex = 1;
+
+        // Costruisco dinamicamente la query di aggiornamento
+        if (data.name !== undefined) {
+          updateFields.push(`name = $${paramIndex++}`);
+          updateValues.push(data.name);
+        }
+
+        // Aggiungo le condizioni WHERE
+        updateValues.push(category_id);
+        updateValues.push(company_id);
+
+        if (updateFields.length === 0) {
+          // Nessun campo da aggiornare
+          resolve({
+            category_id: category_id,
+            message: "Nessun campo da aggiornare",
+          });
+        }
+
+        const updateQuery = `UPDATE public."Category" SET ${updateFields.join(
+          ", "
+        )} 
+          WHERE category_id = $${paramIndex++} AND company_id = $${paramIndex++} 
+          RETURNING category_id`;
+
+        db.query(updateQuery, updateValues, (err, updateResult) => {
+          if (err) {
+            console.error("Errore nell'aggiornamento della categoria:", err);
+            reject(err);
+          }
+
+          // Gestisco gli attributi se forniti
+          if (data.attributes !== undefined) {
+            // Prima elimino gli attributi esistenti
+            const deleteAttributesQuery = `DELETE FROM public."Category_Attribute" WHERE category_id = $1`;
+            db.query(
+              deleteAttributesQuery,
+              [category_id],
+              (err, deleteResult) => {
+                if (err) {
+                  console.error(
+                    "Errore nell'eliminazione degli attributi categoria:",
+                    err
+                  );
+                  reject(err);
+                }
+
+                // Se ci sono attributi da inserire, li inserisco
+                if (data.attributes && data.attributes.length > 0) {
+                  // Filtro gli attributi validi (con name e type non null)
+                  const validAttributes = data.attributes.filter(
+                    (attr) => attr.name && attr.type
+                  );
+
+                  if (validAttributes.length === 0) {
+                    resolve({
+                      category_id: category_id,
+                      message:
+                        "Categoria aggiornata con successo (nessun attributo valido)",
+                    });
+                    return;
+                  }
+
+                  const attributesQuery = `INSERT INTO public."Category_Attribute" (category_id, name, type, "isRequired", created_by) VALUES ($1, $2, $3, $4, $5)`;
+                  let attributesProcessed = 0;
+
+                  validAttributes.forEach((attribute) => {
+                    db.query(
+                      attributesQuery,
+                      [
+                        category_id,
+                        attribute.name,
+                        attribute.type,
+                        attribute.isRequired || false,
+                        updated_by,
+                      ],
+                      (err, result) => {
+                        if (err) {
+                          reject(err);
+                        }
+                        attributesProcessed++;
+                        if (attributesProcessed === validAttributes.length) {
+                          resolve({
+                            category_id: category_id,
+                            message:
+                              "Categoria e attributi aggiornati con successo",
+                          });
+                        }
+                      }
+                    );
+                  });
+                } else {
+                  // Nessun attributo da inserire, categoria aggiornata
+                  resolve({
+                    category_id: category_id,
+                    message:
+                      "Categoria aggiornata con successo (attributi rimossi)",
+                  });
+                }
+              }
+            );
+          } else {
+            resolve({
+              category_id: category_id,
+              message: "Categoria aggiornata con successo",
+            });
+          }
+        });
+      });
+    });
+  }
+
   static async getAllProducts(db) {
     return new Promise((resolve, reject) => {
       db.query(`SELECT * FROM public."Product"`, async (err, result) => {

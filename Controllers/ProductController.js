@@ -88,6 +88,65 @@ class ProductController {
     }
   }
 
+  static async getCategoryById(req, res, db) {
+    try {
+      const category_id = req.params.id;
+      const company_id = req.session.account.company_id;
+
+      if (!category_id) {
+        return res.status(400).json({ error: "ID categoria è richiesto" });
+      }
+
+      const category = await Product.getCategoryById(
+        db,
+        category_id,
+        company_id
+      );
+      res.status(200).json(category);
+    } catch (error) {
+      console.error("Errore nel recupero della categoria:", error);
+      if (error.message === "Categoria non trovata o non autorizzata") {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Errore nel recupero della categoria" });
+      }
+    }
+  }
+
+  static async updateCategory(req, res, db) {
+    try {
+      const category_id = req.params.id;
+      const data = req.body;
+      const company_id = req.session.account.company_id;
+      const updated_by = req.session.account.user_id;
+
+      if (!category_id) {
+        return res.status(400).json({ error: "ID categoria è richiesto" });
+      }
+
+      const category = await Product.updateCategory(
+        db,
+        category_id,
+        data,
+        company_id,
+        updated_by
+      );
+      res.status(200).json(category);
+    } catch (error) {
+      console.error("Errore nell'aggiornamento della categoria:", error);
+      if (
+        error.message ===
+        "Categoria non trovata o non autorizzata all'aggiornamento"
+      ) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Errore nell'aggiornamento della categoria" });
+      }
+    }
+  }
+
   static async getAllProducts(req, res, db) {
     try {
       const products = await Product.getAllProducts(db);

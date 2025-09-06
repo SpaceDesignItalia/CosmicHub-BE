@@ -25,6 +25,10 @@ const productGET = (db) => {
     ProductController.getProductById(req, res, db);
   });
 
+  router.get("/GetCategoryById/:id", authenticateMiddleware, (req, res) => {
+    ProductController.getCategoryById(req, res, db);
+  });
+
   return router;
 };
 
