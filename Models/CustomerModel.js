@@ -249,6 +249,149 @@ class CustomerModel {
       });
     });
   }
+
+  static UpdateEvent(db, company_id, event_id, event) {
+    return new Promise((resolve, reject) => {
+      // Prima aggiorna l'evento principale
+      const updateEventQuery = `
+        UPDATE public."Event" 
+        SET 
+          title = $1,
+          description = $2,
+          customer_id = $3,
+          event_type = $4,
+          priority = $5,
+          assigned_technician = $6,
+          location = $7,
+          notes = $8,
+          start_date = $9,
+          end_date = $10,
+          start_time = $11,
+          end_time = $12
+        WHERE event_id = $13 AND company_id = $14
+        RETURNING *
+      `;
+
+      db.query(
+        updateEventQuery,
+        [
+          event.EventTitle,
+          event.EventDescription,
+          event.CustomerInfo.customer_id,
+          event.EventType,
+          event.EventPriority,
+          event.TechnicianAssignment?.technician_id || null,
+          event.EventLocation,
+          event.EventNotes,
+          event.EventStartDate,
+          event.EventEndDate,
+          event.EventStartTime,
+          event.EventEndTime,
+          event_id,
+          company_id,
+        ],
+        (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          if (result.rows.length === 0) {
+            reject(new Error("Evento non trovato o non autorizzato"));
+            return;
+          }
+
+          // Elimina i partecipanti esistenti
+          const deleteParticipantsQuery = `
+            DELETE FROM public."Event_Partecipant" 
+            WHERE event_id = $1
+          `;
+
+          db.query(deleteParticipantsQuery, [event_id], (deleteError) => {
+            if (deleteError) {
+              reject(deleteError);
+              return;
+            }
+
+            // Se non ci sono nuovi partecipanti, risolvi immediatamente
+            if (
+              !event.EventPartecipants ||
+              event.EventPartecipants.length === 0
+            ) {
+              resolve(result.rows[0]);
+              return;
+            }
+
+            // Aggiungi i nuovi partecipanti
+            const insertParticipantQuery = `
+              INSERT INTO public."Event_Partecipant"(
+                email, role, event_id
+              ) VALUES ($1, $2, $3) RETURNING *
+            `;
+
+            let completedQueries = 0;
+            const totalQueries = event.EventPartecipants.length;
+
+            for (const participant of event.EventPartecipants) {
+              db.query(
+                insertParticipantQuery,
+                [
+                  participant.EventPartecipantEmail,
+                  participant.EventPartecipantRole,
+                  event_id,
+                ],
+                (insertError) => {
+                  if (insertError) {
+                    reject(insertError);
+                    return;
+                  }
+
+                  completedQueries++;
+                  if (completedQueries === totalQueries) {
+                    resolve(result.rows[0]);
+                  }
+                }
+              );
+            }
+          });
+        }
+      );
+    });
+  }
+
+  static DeleteEvent(db, company_id, event_id) {
+    return new Promise((resolve, reject) => {
+      // Prima elimina i partecipanti dell'evento
+      const deleteParticipantsQuery = `
+        DELETE FROM public."Event_Partecipant" 
+        WHERE event_id = $1
+      `;
+
+      db.query(deleteParticipantsQuery, [event_id], (deleteError) => {
+        if (deleteError) {
+          reject(deleteError);
+          return;
+        }
+
+        // Poi elimina l'evento
+        const deleteEventQuery = `
+          DELETE FROM public."Event" 
+          WHERE event_id = $1 AND company_id = $2
+          RETURNING *
+        `;
+
+        db.query(deleteEventQuery, [event_id, company_id], (error, result) => {
+          if (error) {
+            reject(error);
+          } else if (result.rows.length === 0) {
+            reject(new Error("Evento non trovato o non autorizzato"));
+          } else {
+            resolve(result.rows[0]);
+          }
+        });
+      });
+    });
+  }
 }
 
 module.exports = CustomerModel;
