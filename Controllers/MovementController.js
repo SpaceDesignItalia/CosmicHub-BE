@@ -283,9 +283,26 @@ class MovementController {
         });
       }
 
+      // Estrai product_id da selectedProduct e gestisci il magazzino
+      const movementData = {
+        ...data,
+        product_id: data.selectedProduct.product_id,
+      };
+
+      // Gestisci il magazzino in base al tipo di movimento
+      if (data.type === "increase") {
+        // Per gli increase: il magazzino è la destinazione
+        movementData.to_warehouse_id = data.selectedProduct.warehouse_id;
+        movementData.from_warehouse_id = null;
+      } else if (data.type === "decrease") {
+        // Per i decrease: il magazzino è l'origine
+        movementData.from_warehouse_id = data.selectedProduct.warehouse_id;
+        movementData.to_warehouse_id = null;
+      }
+
       const movement = await Movement.createMovement(
         db,
-        data,
+        movementData,
         company_id,
         created_by
       );
